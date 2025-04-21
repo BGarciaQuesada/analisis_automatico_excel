@@ -1,5 +1,7 @@
 import tkinter as tk
 
+# [!!!] Ahora mismo esto es un tochaco de texto. Pretendo sustituirlo luego con imagenes.
+
 def mostrar_tutorial(root):
     ventana_tutorial = tk.Toplevel(root)
     ventana_tutorial.title("Tutorial")
