@@ -5,13 +5,11 @@ import tabla_predeterminada
 import tabla_personalizada
 import tutorial
 
-# [!!!] Investigar más tarde como ensanchar los botones a la ventana, hacer que esta sea
-# [!!!] un poco más grande por defecto, que solo haya una ventana a la vez en lugar de varias...
-
 def main():
     # Creación de root (ventana)
     root = tk.Tk()
     root.title("Gestor de Tablas MFYP")
+    root.minsize(400, 300)  # Establecer un tamaño mínimo para la ventana
 
     # Métodos a ser utilizados por los botones
     def on_comprobacion_datos():
@@ -27,10 +25,10 @@ def main():
         tutorial.mostrar_tutorial(root)
 
     # --- INTERFAZ GRÁFICA (WIP) ---
-    tk.Button(root, text="Comprobación de Datos", command=on_comprobacion_datos).pack(pady=5)
-    tk.Button(root, text="Tabla Predeterminada", command=on_tabla_predeterminada).pack(pady=5)
-    tk.Button(root, text="Tabla Personalizada", command=on_tabla_personalizada).pack(pady=5)
-    tk.Button(root, text="Tutorial", command=on_tutorial).pack(pady=5)
+    tk.Button(root, text="Comprobación de Datos", command=on_comprobacion_datos, width=20, height=2).pack(pady=5)
+    tk.Button(root, text="Tabla Predeterminada", command=on_tabla_predeterminada, width=20, height=2).pack(pady=5)
+    tk.Button(root, text="Tabla Personalizada", command=on_tabla_personalizada, width=20, height=2).pack(pady=5)
+    tk.Button(root, text="Tutorial", command=on_tutorial, width=20, height=2).pack(pady=5)
 
     root.mainloop()
 
