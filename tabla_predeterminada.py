@@ -22,7 +22,7 @@ def mostrar_menu_predeterminadas(root):
         ventana_detalle = tk.Toplevel(ventana_predeterminadas)
         ventana_detalle.title(f"Detalle de {modelo}")
 
-        descripcion = f"Descripción del modelo {modelo}"  # Puedes mejorar esto cargando descripciones desde un archivo
+        descripcion = f"Descripción del modelo {modelo}"
         tk.Label(ventana_detalle, text=descripcion, wraplength=400, justify="left").pack(pady=10)
 
         def generar_xls():
