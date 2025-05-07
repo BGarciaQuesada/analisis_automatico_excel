@@ -72,14 +72,14 @@ def ejecutar_modelo(root):
     output_path = 'resultados/Tabla_2_06.xlsx'
     df_final.to_excel(output_path, index=True)
 
-    messagebox.showinfo("Éxito", f"Tabla 2.06 generada y guardada en {output_path}.")
+    messagebox.showinfo("Éxito", f"Tabla 2.06 generada y guardada en Resultados.")
 
 # [!!!] En un futuro se pretende transformar esto en plantilla
 #
 # Esta clase se convierte en plantilla y le tengo que pasar: 
 # · De qué archivo leer (línea 21: "datos/regimen_general.xls") y su error subsecuente (línea 23)
-# · columnas_objetivo (linea 33, array)
-# · filas_objetivo (linea 39, array)
-# · Nombre del archivo resultado (línea 46, 'resultados/Tabla_2_06.xlsx') y éxito (línea 49)
+# · columnas_objetivo
+# · filas_objetivo
+# · Nombre del archivo resultado (línea 72, 'resultados/Tabla_2_06.xlsx') y éxito (línea 75)
 #
 # Como el encabezado es igual en todas, la Limpieza de títulos de columnas se puede mantener

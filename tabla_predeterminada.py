@@ -30,7 +30,6 @@ def mostrar_menu_predeterminadas(root):
                 # Importar dinámicamente el módulo del modelo
                 modulo = importlib.import_module(f"modelos.{modelo}")
                 modulo.ejecutar_modelo(ventana_detalle)
-                messagebox.showinfo("Éxito", f"Tabla {modelo} generada y guardada en Resultados.")
                 ventana_detalle.destroy()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo generar la tabla:\n{e}")
