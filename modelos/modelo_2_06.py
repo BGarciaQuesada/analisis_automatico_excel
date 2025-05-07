@@ -15,9 +15,10 @@ def limpiar_titulo(titulo):
 def ejecutar_modelo(root):
     # Asegurarse de que el directorio 'datos' exista
     if not os.path.exists('datos'):
-        messagebox.showerror("Error", "El directorio 'datos' no existe.")
+        # > Antes solo salía un error cutre. Ahora lo crea.
+        os.makedirs('datos')
+        messagebox.showinfo("Información", "El directorio 'datos' no existía y fue creado. Por favor, coloca el archivo 'regimen_general.xls' en esa carpeta.")
         return
-
     try:
         # Cargar el Excel CON ENCABEZADOS desde la fila 7
         df = pd.read_excel('datos/regimen_general.xls', header=6)

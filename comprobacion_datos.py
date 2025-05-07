@@ -7,6 +7,17 @@ from tkinter import ttk
 # Encontrar directorio de datos y qué se debe de encontrar dentro de este
 def comprobar_datos(root):
     datos_dir = 'datos'
+
+    # Comprobación de la existencia del directorio 'datos'
+    if not os.path.exists(datos_dir):
+        os.makedirs(datos_dir)
+        tk.messagebox.showinfo(
+            "Directorio creado",
+            "Directorio 'datos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de datos a esta."
+        )
+        # [!!!] Siento que este return es un crimen, comprobar más tarde
+        return  # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
+
     # [!!!] Sustituir......
     # [!!!] Y comprobar que no explote por caracteres especiales....................
     archivos_requeridos = ['regimen_general.xls', 'todas_las_ensenanzas.xls', 'ensenanza_de_adultos.xls']
@@ -42,7 +53,7 @@ def comprobar_datos(root):
                 # En caso de que de excepción, devolver cruz.
                 resultado.append((f"❌ {archivo}", f"Error: {str(e)}"))
         else:
-            # ¿No esá? devuelve cruz.
+            # ¿No está? devuelve cruz.
             resultado.append((f"❌ {archivo}", "Archivo no encontrado"))
 
     # Creación de root (ventana)
@@ -50,9 +61,9 @@ def comprobar_datos(root):
     ventana_resultados.title("Resultados de Comprobación")
 
     # --- INTERFAZ GRÁFICA (WIP) ---
-    tree = ttk.Treeview(ventana_resultados, columns=("Estado", "Detalle"), show="headings")
+    tree = ttk.Treeview(ventana_resultados, columns=("Documento", "Estado"), show="headings")
+    tree.heading("Documento", text="Documento")
     tree.heading("Estado", text="Estado")
-    tree.heading("Detalle", text="Detalle")
     tree.pack(expand=True, fill=tk.BOTH)
 
     for estado, detalle in resultado:

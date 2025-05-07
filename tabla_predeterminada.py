@@ -10,11 +10,26 @@ def mostrar_menu_predeterminadas(root):
     ventana_predeterminadas.title("Tablas Predeterminadas")
 
     # Asegurarse de que el directorio 'resultados' exista
+    # (Como solo es para devolver, no hay problemas como en comprobacion_datos.py)
     if not os.path.exists('resultados'):
         os.makedirs('resultados')
+        messagebox.showinfo(
+            "Directorio creado",
+            "Directorio 'resultados' no encontrado, se ha creado de nuevo. Las tablas predeterminadas se guardaran en esta."
+        )
 
-    # Detectar modelos disponibles en la carpeta 'modelos'
     modelos_dir = 'modelos'
+    # Comprobación de la existencia del directorio 'modelos'
+    if not os.path.exists(modelos_dir):
+        os.makedirs(modelos_dir)
+        tk.messagebox.showinfo(
+            "Directorio creado",
+            "Directorio 'modelos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de modelos a esta."
+        )
+        # [!!!] Siento que este return es un crimen, comprobar más tarde
+        return  # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
+    
+    # Detectar modelos disponibles en la carpeta 'modelos'
     modelos_disponibles = [f.replace('.py', '') for f in os.listdir(modelos_dir) if f.endswith('.py')]
 
     # --- INTERFAZ GRÁFICA (WIP) ---

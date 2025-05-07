@@ -52,6 +52,15 @@ def mostrar_menu_personalizadas(root):
         if not tablas_seleccionadas:
             messagebox.showwarning("Advertencia", "Debes seleccionar al menos una tabla.")
             return
+        
+        # Comprobación de la existencia del directorio 'resultados'
+        resultados_dir = 'resultados'
+        if not os.path.exists(resultados_dir):
+            os.makedirs(resultados_dir)
+            messagebox.showinfo(
+                "Directorio creado",
+                "Directorio 'resultados' no encontrado, se ha creado de nuevo. Las tablas personalizadas se guardaran en esta."
+            )
 
         for tabla, datos in tablas_seleccionadas:
             df = pd.DataFrame(columns=datos)
