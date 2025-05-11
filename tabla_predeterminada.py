@@ -3,6 +3,7 @@ from tkinter import messagebox
 import pandas as pd
 import os
 import importlib
+from plantilla_test import ModeloPlantilla  # Asegúrate de que la ruta de importación sea correcta
 
 def mostrar_menu_predeterminadas(root):
     # Creación de root (ventana)
@@ -10,7 +11,6 @@ def mostrar_menu_predeterminadas(root):
     ventana_predeterminadas.title("Tablas Predeterminadas")
 
     # Asegurarse de que el directorio 'resultados' exista
-    # (Como solo es para devolver, no hay problemas como en comprobacion_datos.py)
     if not os.path.exists('resultados'):
         os.makedirs('resultados')
         messagebox.showinfo(
@@ -26,9 +26,8 @@ def mostrar_menu_predeterminadas(root):
             "Directorio creado",
             "Directorio 'modelos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de modelos a esta."
         )
-        # [!!!] Siento que este return es un crimen, comprobar más tarde
         return  # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
-    
+
     # Detectar modelos disponibles en la carpeta 'modelos'
     modelos_disponibles = [f.replace('.py', '') for f in os.listdir(modelos_dir) if f.endswith('.py')]
 
@@ -42,9 +41,18 @@ def mostrar_menu_predeterminadas(root):
 
         def generar_xls():
             try:
-                # Importar dinámicamente el módulo del modelo
-                modulo = importlib.import_module(f"modelos.{modelo}")
-                modulo.ejecutar_modelo(ventana_detalle)
+                # Crear una instancia de ModeloPlantilla con los parámetros necesarios.
+                # Habrá que encontrar una forma de sustuirlos automáticamente más tarde
+                # > ¿Guardarlo en un csv?
+                modelo_plantilla = ModeloPlantilla(
+                    archivo_entrada='datos/regimen_general.xls',
+                    archivo_salida=f'resultados/{modelo}.xlsx',
+                    secciones=['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
+                    subsecciones=['AMBOS SEXOS', 'Hombres', 'Mujeres'],
+                    filas_objetivo=['01 ANDALUCÍA']
+                )
+                # Ejecutar el modelo
+                modelo_plantilla.ejecutar_modelo(ventana_detalle)
                 ventana_detalle.destroy()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo generar la tabla:\n{e}")
