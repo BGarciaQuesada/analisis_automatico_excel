@@ -6,6 +6,9 @@ from tkinter import ttk
 
 # Encontrar directorio de datos y qué se debe de encontrar dentro de este
 def comprobar_datos(root):
+     # Ocultar la ventana anterior
+    root.withdraw() 
+
     datos_dir = 'datos'
 
     # Comprobación de la existencia del directorio 'datos'
@@ -59,7 +62,8 @@ def comprobar_datos(root):
     # Creación de root (ventana)
     ventana_resultados = tk.Toplevel(root)
     ventana_resultados.title("Resultados de Comprobación")
-
+    ventana_resultados.minsize(600, 400)  # Tamaño mínimo de la ventana
+    
     # --- INTERFAZ GRÁFICA (WIP) ---
     tree = ttk.Treeview(ventana_resultados, columns=("Documento", "Estado"), show="headings")
     tree.heading("Documento", text="Documento")
@@ -68,3 +72,6 @@ def comprobar_datos(root):
 
     for estado, detalle in resultado:
         tree.insert("", "end", values=(estado, detalle))
+
+    # Botón de Regresar
+    tk.Button(ventana_resultados, text="Regresar", command=lambda: [ventana_resultados.destroy(), root.deiconify()]).pack(pady=10, padx=20, fill=tk.BOTH)

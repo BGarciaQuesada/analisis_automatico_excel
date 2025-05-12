@@ -6,9 +6,13 @@ import importlib
 from plantilla_test import ModeloPlantilla  # Asegúrate de que la ruta de importación sea correcta
 
 def mostrar_menu_predeterminadas(root):
+    # Ocultar la ventana anterior
+    root.withdraw()
+    
     # Creación de root (ventana)
     ventana_predeterminadas = tk.Toplevel(root)
     ventana_predeterminadas.title("Tablas Predeterminadas")
+    ventana_predeterminadas.minsize(600, 400)  # Tamaño mínimo de la ventana
 
     # Asegurarse de que el directorio 'resultados' exista
     if not os.path.exists('resultados'):
@@ -63,4 +67,5 @@ def mostrar_menu_predeterminadas(root):
     for modelo in modelos_disponibles:
         tk.Button(ventana_predeterminadas, text=modelo, command=lambda m=modelo: mostrar_detalle(m)).pack(pady=5)
 
-    tk.Button(ventana_predeterminadas, text="Regresar", command=ventana_predeterminadas.destroy).pack(pady=5)
+    # Botón de Regresar
+    tk.Button(ventana_predeterminadas, text="Regresar", command=lambda: [ventana_predeterminadas.destroy(), root.deiconify()]).pack(pady=10, padx=20, fill=tk.BOTH)

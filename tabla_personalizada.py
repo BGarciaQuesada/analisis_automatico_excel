@@ -3,10 +3,17 @@ from tkinter import messagebox
 import pandas as pd
 import os
 
+# [!!!] CUANDO SE CIERRA EL PROGRAMA DESDE CUALQUIER VENTANA QUE NO SEA LA MAIN NO SE MATA AL PROGRAMA!!!!!!!!!
+# [!!!] Es una tontería, ver ahora
+
 def mostrar_menu_personalizadas(root):
+    # Ocultar la ventana anterior
+    root.withdraw()
+
     # Crear root (ventana)
     ventana_personalizadas = tk.Toplevel(root)
     ventana_personalizadas.title("Tablas Personalizadas")
+    ventana_personalizadas.minsize(600, 400)  # Tamaño mínimo de la ventana
 
     tablas_disponibles = ["regimen_general", "infantil", "primaria"]
     tablas_seleccionadas = []
@@ -28,7 +35,7 @@ def mostrar_menu_personalizadas(root):
             opciones_datos = ["género", "cursos", "provincia"]
             var_datos = {opcion: tk.IntVar() for opcion in opciones_datos}
 
-            # Métododo para saber qué se ha marcado en cada una
+            # Método para saber qué se ha marcado en cada una
             def guardar_configuracion():
                 datos_seleccionados = [opcion for opcion, var in var_datos.items() if var.get()]
                 if datos_seleccionados:
@@ -52,7 +59,7 @@ def mostrar_menu_personalizadas(root):
         if not tablas_seleccionadas:
             messagebox.showwarning("Advertencia", "Debes seleccionar al menos una tabla.")
             return
-        
+
         # Comprobación de la existencia del directorio 'resultados'
         resultados_dir = 'resultados'
         if not os.path.exists(resultados_dir):
@@ -69,10 +76,13 @@ def mostrar_menu_personalizadas(root):
         messagebox.showinfo("Éxito", "Tabla personalizada generada y guardada en Resultados.")
         ventana_personalizadas.destroy()
 
-    listbox_tablas = tk.Listbox(ventana_personalizadas)
-    listbox_tablas.pack(pady=10)
+    # Lista
+    listbox_tablas = tk.Listbox(ventana_personalizadas, height=15)  # Vertical
+    listbox_tablas.pack(pady=10, padx=20, fill=tk.X, expand=False) # Horizontal (Expansión)
 
     # Botones
-    tk.Button(ventana_personalizadas, text="+", command=agregar_tabla).pack(pady=5)
-    tk.Button(ventana_personalizadas, text="Generar XLS", command=generar_xls).pack(pady=5)
-    tk.Button(ventana_personalizadas, text="Regresar", command=ventana_personalizadas.destroy).pack(pady=5)
+    tk.Button(ventana_personalizadas, text="+", command=agregar_tabla).pack(pady=5, padx=20, fill=tk.BOTH)
+    tk.Button(ventana_personalizadas, text="Generar XLS", command=generar_xls).pack(pady=5, padx=20, fill=tk.BOTH)
+    
+    # Botón de Regresar
+    tk.Button(ventana_personalizadas, text="Regresar", command=lambda: [ventana_personalizadas.destroy(), root.deiconify()]).pack(pady=5, padx=20, fill=tk.BOTH)

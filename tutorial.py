@@ -3,8 +3,12 @@ import tkinter as tk
 # [!!!] Ahora mismo esto es un tochaco de texto. Pretendo sustituirlo luego con imagenes.
 
 def mostrar_tutorial(root):
+    # Ocultar la ventana anterior
+    root.withdraw()
+
     ventana_tutorial = tk.Toplevel(root)
     ventana_tutorial.title("Tutorial")
+    ventana_tutorial.minsize(600, 400) # Tamaño mínimo de la ventana
 
     tutorial_text = """
     Bienvenido al Gestor de Tablas MFYP.
@@ -25,4 +29,6 @@ def mostrar_tutorial(root):
     """
 
     tk.Label(ventana_tutorial, text=tutorial_text, justify=tk.LEFT).pack(pady=10)
-    tk.Button(ventana_tutorial, text="Cerrar", command=ventana_tutorial.destroy).pack(pady=5)
+    
+    # Botón de Regresar
+    tk.Button(ventana_tutorial, text="Regresar", command=lambda: [ventana_tutorial.destroy(), root.deiconify()]).pack(pady=10, padx=20, fill=tk.BOTH)
