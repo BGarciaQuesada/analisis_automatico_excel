@@ -1,14 +1,14 @@
 import tkinter as tk
 
-from plantilla_test import ModeloPlantilla
+from plantilla import ModeloPlantilla
 
 # EJEMPLO DE USO DE LA PLANTILLA, NO INCLUIDO EN PRODUCTO FINAL!!!
 # Se puede encontrar empleado en tabla_predeterminada
 
 # Crear una instancia de la clase ModeloPlantilla con los parámetros necesarios
 modelo = ModeloPlantilla(
-    archivo_entrada='datos/regimen_general.xls',
-    archivo_salida='resultados/Tabla_2_06.xlsx',
+    archivos_entrada='datos/regimen_general.xls',
+    archivos_salida='resultados/Tabla_2_06.xlsx',
     secciones=['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
     subsecciones=['AMBOS SEXOS', 'Hombres', 'Mujeres'],
     filas_objetivo=['01 ANDALUCÍA']

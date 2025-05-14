@@ -5,9 +5,9 @@ import tkinter as tk
 from tkinter import messagebox
 
 class ModeloPlantilla:
-    def __init__(self, archivo_entrada, archivo_salida, secciones, subsecciones, filas_objetivo):
-        self.archivo_entrada = archivo_entrada
-        self.archivo_salida = archivo_salida
+    def __init__(self, archivos_entrada, archivos_salida, secciones, subsecciones, filas_objetivo):
+        self.archivos_entrada = archivos_entrada
+        self.archivos_salida = archivos_salida
         self.secciones = secciones  # Lista de secciones a buscar
         self.subsecciones = subsecciones  # Lista de subsecciones a buscar
         self.filas_objetivo = filas_objetivo  # Lista de filas objetivo a extraer
@@ -22,14 +22,14 @@ class ModeloPlantilla:
         # Asegurarse de que el directorio 'datos' exista
         if not os.path.exists('datos'):
             os.makedirs('datos')
-            messagebox.showinfo("Información", f"El directorio 'datos' no existía y fue creado. Por favor, coloca el archivo '{self.archivo_entrada}' en esa carpeta.")
+            messagebox.showinfo("Información", f"El directorio 'datos' no existía y fue creado. Por favor, coloca el archivo '{self.archivos_entrada}' en esa carpeta.")
             return
 
         try:
             # Cargar el Excel CON ENCABEZADOS desde la fila 7
-            df = pd.read_excel(self.archivo_entrada, header=6)
+            df = pd.read_excel(self.archivos_entrada, header=6)
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo cargar el archivo '{self.archivo_entrada}':\n{e}")
+            messagebox.showerror("Error", f"No se pudo cargar el archivo '{self.archivos_entrada}':\n{e}")
             return
 
         # Limpieza de títulos de columnas
@@ -67,7 +67,7 @@ class ModeloPlantilla:
         df_final = pd.concat([df_final, df_subseccion[df_subseccion.iloc[:, 0].isin(self.filas_objetivo)]])
 
         # Guardar el resultado en un archivo Excel
-        df_final.to_excel(self.archivo_salida, index=True)
+        df_final.to_excel(self.archivos_salida, index=True)
 
-        messagebox.showinfo("Éxito", f"Tabla generada y guardada en {self.archivo_salida}.")
+        messagebox.showinfo("Éxito", f"Tabla generada y guardada en {self.archivos_salida}.")
         

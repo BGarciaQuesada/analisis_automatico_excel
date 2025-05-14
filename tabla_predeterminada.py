@@ -3,7 +3,7 @@ from tkinter import messagebox
 import pandas as pd
 import os
 import importlib
-from plantilla_test import ModeloPlantilla  # Asegúrate de que la ruta de importación sea correcta
+from plantilla import ModeloPlantilla  # Asegúrate de que la ruta de importación sea correcta
 
 def mostrar_menu_predeterminadas(root):
     # Ocultar la ventana anterior
@@ -49,8 +49,8 @@ def mostrar_menu_predeterminadas(root):
                 # Habrá que encontrar una forma de sustuirlos automáticamente más tarde
                 # > ¿Guardarlo en un csv?
                 modelo_plantilla = ModeloPlantilla(
-                    archivo_entrada='datos/regimen_general.xls',
-                    archivo_salida=f'resultados/{modelo}.xlsx',
+                    archivos_entrada='datos/regimen_general.xls',
+                    archivos_salida=f'resultados/{modelo}.xlsx',
                     secciones=['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
                     subsecciones=['AMBOS SEXOS', 'Hombres', 'Mujeres'],
                     filas_objetivo=['01 ANDALUCÍA']

@@ -2,9 +2,12 @@ import tkinter as tk
 from tkinter import messagebox
 import pandas as pd
 import os
+from plantilla import ModeloPlantilla
 
 # [!!!] CUANDO SE CIERRA EL PROGRAMA DESDE CUALQUIER VENTANA QUE NO SEA LA MAIN NO SE MATA AL PROGRAMA!!!!!!!!!
 # [!!!] Es una tontería, ver ahora
+
+#  No se encuentra el archivo. Investigar mañana.
 
 def mostrar_menu_personalizadas(root):
     # Ocultar la ventana anterior
@@ -39,7 +42,12 @@ def mostrar_menu_personalizadas(root):
             def guardar_configuracion():
                 datos_seleccionados = [opcion for opcion, var in var_datos.items() if var.get()]
                 if datos_seleccionados:
-                    tablas_seleccionadas.append((tabla, datos_seleccionados))
+                    configuracion = {
+                        'secciones': ['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
+                        'subsecciones': datos_seleccionados,
+                        'filas_objetivo': ['01 ANDALUCÍA']
+                    }
+                    tablas_seleccionadas.append((tabla, configuracion))
                     listbox_tablas.insert(tk.END, f"{tabla} ({', '.join(datos_seleccionados)})")
                 ventana_configuracion.destroy()
                 ventana_seleccion.destroy()
@@ -69,13 +77,20 @@ def mostrar_menu_personalizadas(root):
                 "Directorio 'resultados' no encontrado, se ha creado de nuevo. Las tablas personalizadas se guardaran en esta."
             )
 
-        for tabla, datos in tablas_seleccionadas:
-            df = pd.DataFrame(columns=datos)
-            df.to_excel(f'resultados/{tabla}_personalizada.xls', index=False)
+        archivos_entrada = [f'datos/{tabla}.xls' for tabla, _ in tablas_seleccionadas]
+        archivos_salida = 'resultados/tabla_personalizada.xlsx'
+        configuraciones = [config for _, config in tablas_seleccionadas]
 
-        messagebox.showinfo("Éxito", "Tabla personalizada generada y guardada en Resultados.")
-        ventana_personalizadas.destroy()
-
+        # Usar la primera configuración para secciones, subsecciones y filas_objetivo
+        modelo_plantilla = ModeloPlantilla(
+            archivos_entrada=archivos_entrada,
+            archivos_salida=archivos_salida,
+            secciones=configuraciones[0]['secciones'],
+            subsecciones=configuraciones[0]['subsecciones'],
+            filas_objetivo=configuraciones[0]['filas_objetivo']
+        )
+        modelo_plantilla.ejecutar_modelo(ventana_personalizadas)
+        
     # Lista
     listbox_tablas = tk.Listbox(ventana_personalizadas, height=15)  # Vertical
     listbox_tablas.pack(pady=10, padx=20, fill=tk.X, expand=False) # Horizontal (Expansión)
@@ -83,6 +98,6 @@ def mostrar_menu_personalizadas(root):
     # Botones
     tk.Button(ventana_personalizadas, text="+", command=agregar_tabla).pack(pady=5, padx=20, fill=tk.BOTH)
     tk.Button(ventana_personalizadas, text="Generar XLS", command=generar_xls).pack(pady=5, padx=20, fill=tk.BOTH)
-    
+
     # Botón de Regresar
     tk.Button(ventana_personalizadas, text="Regresar", command=lambda: [ventana_personalizadas.destroy(), root.deiconify()]).pack(pady=5, padx=20, fill=tk.BOTH)
