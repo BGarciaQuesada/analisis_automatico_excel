@@ -49,8 +49,8 @@ def mostrar_menu_predeterminadas(root):
                 # Habrá que encontrar una forma de sustuirlos automáticamente más tarde
                 # > ¿Guardarlo en un csv?
                 modelo_plantilla = ModeloPlantilla(
-                    archivos_entrada='datos/regimen_general.xls',
-                    archivos_salida=f'resultados/{modelo}.xlsx',
+                    archivos_entrada=['datos/regimen_general.xls'],  # Nota: archivos_entrada es una lista
+                    archivo_salida=f'resultados/{modelo}.xlsx',
                     secciones=['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
                     subsecciones=['AMBOS SEXOS', 'Hombres', 'Mujeres'],
                     filas_objetivo=['01 ANDALUCÍA']
@@ -69,3 +69,4 @@ def mostrar_menu_predeterminadas(root):
 
     # Botón de Regresar
     tk.Button(ventana_predeterminadas, text="Regresar", command=lambda: [ventana_predeterminadas.destroy(), root.deiconify()]).pack(pady=10, padx=20, fill=tk.BOTH)
+    

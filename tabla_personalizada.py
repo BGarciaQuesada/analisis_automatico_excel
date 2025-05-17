@@ -29,31 +29,50 @@ def mostrar_menu_personalizadas(root):
         ventana_seleccion.title("Seleccionar Tabla")
 
         # Al seleccionar una tabla, mostrar las casillas a marcar
-        # [!!!] Esto va a cambiar de tabla en tabla, WIP.
         def seleccionar_tabla(tabla):
             ventana_configuracion = tk.Toplevel(ventana_seleccion)
             ventana_configuracion.title(f"Configurar {tabla}")
 
-            # Cajas marcables
-            opciones_datos = ["género", "cursos", "provincia"]
-            var_datos = {opcion: tk.IntVar() for opcion in opciones_datos}
+            # Cajas marcables para secciones
+            opciones_secciones = ["TODOS LOS CENTROS", "CENTROS PÚBLICOS"]
+            var_secciones = {opcion: tk.IntVar() for opcion in opciones_secciones}
+
+            # Cajas marcables para subsecciones
+            opciones_subsecciones = ["AMBOS SEXOS", "Hombres", "Mujeres"]
+            var_subsecciones = {opcion: tk.IntVar() for opcion in opciones_subsecciones}
+
+            # Cajas marcables para filas objetivo
+            opciones_filas = ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]
+            var_filas = {opcion: tk.IntVar() for opcion in opciones_filas}
 
             # Método para saber qué se ha marcado en cada una
             def guardar_configuracion():
-                datos_seleccionados = [opcion for opcion, var in var_datos.items() if var.get()]
-                if datos_seleccionados:
+                secciones_seleccionadas = [opcion for opcion, var in var_secciones.items() if var.get()]
+                subsecciones_seleccionadas = [opcion for opcion, var in var_subsecciones.items() if var.get()]
+                filas_seleccionadas = [opcion for opcion, var in var_filas.items() if var.get()]
+
+                if secciones_seleccionadas and subsecciones_seleccionadas and filas_seleccionadas:
                     configuracion = {
-                        'secciones': ['TODOS LOS CENTROS', 'CENTROS PÚBLICOS'],
-                        'subsecciones': datos_seleccionados,
-                        'filas_objetivo': ['01 ANDALUCÍA']
+                        'secciones': secciones_seleccionadas,
+                        'subsecciones': subsecciones_seleccionadas,
+                        'filas_objetivo': filas_seleccionadas
                     }
                     tablas_seleccionadas.append((tabla, configuracion))
-                    listbox_tablas.insert(tk.END, f"{tabla} ({', '.join(datos_seleccionados)})")
+                    listbox_tablas.insert(tk.END, f"{tabla} (Secciones: {', '.join(secciones_seleccionadas)}, Subsecciones: {', '.join(subsecciones_seleccionadas)}, Filas: {', '.join(filas_seleccionadas)})")
                 ventana_configuracion.destroy()
                 ventana_seleccion.destroy()
 
-            for opcion in opciones_datos:
-                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_datos[opcion]).pack(anchor=tk.W)
+            tk.Label(ventana_configuracion, text="Secciones:").pack(anchor=tk.W)
+            for opcion in opciones_secciones:
+                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_secciones[opcion]).pack(anchor=tk.W)
+
+            tk.Label(ventana_configuracion, text="Subsecciones:").pack(anchor=tk.W)
+            for opcion in opciones_subsecciones:
+                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_subsecciones[opcion]).pack(anchor=tk.W)
+
+            tk.Label(ventana_configuracion, text="Filas Objetivo:").pack(anchor=tk.W)
+            for opcion in opciones_filas:
+                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_filas[opcion]).pack(anchor=tk.W)
 
             tk.Button(ventana_configuracion, text="Guardar", command=guardar_configuracion).pack(pady=5)
 
@@ -61,8 +80,6 @@ def mostrar_menu_personalizadas(root):
             tk.Button(ventana_seleccion, text=tabla, command=lambda t=tabla: seleccionar_tabla(t)).pack(pady=5)
 
     # Método para generar xls
-    # [!!!] ¿Y cómo juntarrremos las tablas? La rrrespuesta es clarrra. No lo harrremos.
-    # [!!!] Hablando en serio, hay que analizar eso.
     def generar_xls():
         if not tablas_seleccionadas:
             messagebox.showwarning("Advertencia", "Debes seleccionar al menos una tabla.")
@@ -78,19 +95,19 @@ def mostrar_menu_personalizadas(root):
             )
 
         archivos_entrada = [f'datos/{tabla}.xls' for tabla, _ in tablas_seleccionadas]
-        archivos_salida = 'resultados/tabla_personalizada.xlsx'
+        archivo_salida = 'resultados/tabla_personalizada.xlsx'
         configuraciones = [config for _, config in tablas_seleccionadas]
 
         # Usar la primera configuración para secciones, subsecciones y filas_objetivo
         modelo_plantilla = ModeloPlantilla(
             archivos_entrada=archivos_entrada,
-            archivos_salida=archivos_salida,
+            archivo_salida=archivo_salida,
             secciones=configuraciones[0]['secciones'],
             subsecciones=configuraciones[0]['subsecciones'],
             filas_objetivo=configuraciones[0]['filas_objetivo']
         )
         modelo_plantilla.ejecutar_modelo(ventana_personalizadas)
-        
+
     # Lista
     listbox_tablas = tk.Listbox(ventana_personalizadas, height=15)  # Vertical
     listbox_tablas.pack(pady=10, padx=20, fill=tk.X, expand=False) # Horizontal (Expansión)
