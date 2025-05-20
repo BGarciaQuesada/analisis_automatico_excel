@@ -14,7 +14,7 @@ class TablaPersonalizada:
         self.ventana.minsize(800, 600)
         
         # Variables para almacenar selecciones
-        self.tablas_seleccionadas = []
+        self.tablas_seleccionadas = []  # Ahora almacenamos (tabla, config) como diccionario
         self.tablas_disponibles = ["regimen_general", "infantil", "primaria"]
         
         # Interfaz
@@ -26,22 +26,45 @@ class TablaPersonalizada:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Lista de tablas seleccionadas
-        self.lista_tablas = ttk.Treeview(main_frame, columns=('config',), show='headings')
+        self.lista_tablas = ttk.Treeview(main_frame, columns=('config',), show='headings', selectmode='browse')
         self.lista_tablas.heading('#0', text='Tabla')
         self.lista_tablas.heading('config', text='Configuración')
         self.lista_tablas.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Scrollbar para la lista
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=self.lista_tablas.yview)
+        scrollbar.pack(side="right", fill="y")
+        self.lista_tablas.configure(yscrollcommand=scrollbar.set)
         
         # Botones
         btn_frame = ttk.Frame(main_frame)
         btn_frame.pack(fill=tk.X, pady=5)
         
         ttk.Button(btn_frame, text="Añadir Tabla", command=self.agregar_tabla).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Eliminar Seleccionado", command=self.eliminar_tabla).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Generar Excel", command=self.generar_excel).pack(side=tk.LEFT, padx=5)
         ttk.Button(btn_frame, text="Regresar", command=self.cerrar).pack(side=tk.RIGHT, padx=5)
+    
+    def eliminar_tabla(self):
+        seleccion = self.lista_tablas.selection()
+        if not seleccion:
+            messagebox.showwarning("Advertencia", "Selecciona una tabla para eliminar")
+            return
+        
+        # Eliminar de la lista visual
+        item = self.lista_tablas.item(seleccion[0])
+        tabla = item['text']
+        
+        # Eliminar de la lista interna
+        self.tablas_seleccionadas = [t for t in self.tablas_seleccionadas if t[0] != tabla]
+        
+        # Eliminar de la vista
+        self.lista_tablas.delete(seleccion[0])
     
     def agregar_tabla(self):
         ventana_seleccion = tk.Toplevel(self.ventana)
         ventana_seleccion.title("Seleccionar Tabla")
+        ventana_seleccion.minsize(600, 400)
         
         # Variables para almacenar selecciones
         var_secciones = {tabla: {seccion: tk.BooleanVar() 
@@ -56,6 +79,9 @@ class TablaPersonalizada:
                     for fila in ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]} 
                     for tabla in self.tablas_disponibles}
         
+        # Deshabilitar checkboxes de tablas ya seleccionadas
+        tablas_ya_seleccionadas = [t[0] for t in self.tablas_seleccionadas]
+        
         # > Antes esto era una lista de botones gigante y lo considero cutre. Me gusta más la idea de varias pestañas        
         # Notebook para organizar las pestañas
         notebook = ttk.Notebook(ventana_seleccion)
@@ -64,6 +90,14 @@ class TablaPersonalizada:
         for tabla in self.tablas_disponibles:
             tab_frame = ttk.Frame(notebook)
             notebook.add(tab_frame, text=tabla)
+            
+            # Deshabilitar pestaña si la tabla ya está seleccionada
+            if tabla in tablas_ya_seleccionadas:
+                notebook.tab(tab_frame, state='disabled')
+                ttk.Label(tab_frame, 
+                          text=f"La tabla {tabla} ya está seleccionada",
+                          foreground='gray').pack(pady=50)
+                continue
             
             # Secciones
             ttk.Label(tab_frame, text="Secciones:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
@@ -86,6 +120,9 @@ class TablaPersonalizada:
         # Botón para confirmar
         def confirmar():
             for tabla in self.tablas_disponibles:
+                if tabla in tablas_ya_seleccionadas:
+                    continue  # Saltar tablas ya seleccionadas
+                
                 secciones = [s for s in var_secciones[tabla] if var_secciones[tabla][s].get()]
                 subsecciones = [s for s in var_subsecciones[tabla] if var_subsecciones[tabla][s].get()]
                 filas = [f for f in var_filas[tabla] if var_filas[tabla][f].get()]
@@ -188,7 +225,6 @@ class TablaPersonalizada:
             messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
     
     def limpiar_texto(self, texto):
-        """Limpia el texto eliminando paréntesis y asteriscos"""
         if not isinstance(texto, str):
             return texto
         texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
@@ -196,10 +232,8 @@ class TablaPersonalizada:
         return texto.strip()
     
     def cerrar(self):
-        """Cierra la ventana y muestra la anterior"""
         self.ventana.destroy()
         self.root.deiconify()
 
 def mostrar_menu_personalizadas(root):
-    """Función principal para mostrar el menú de tablas personalizadas"""
     TablaPersonalizada(root)
