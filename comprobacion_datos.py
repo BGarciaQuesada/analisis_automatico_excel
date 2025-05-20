@@ -2,27 +2,32 @@ import os
 import pandas as pd
 import re
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 
-# Encontrar directorio de datos y qué se debe de encontrar dentro de este
 def comprobar_datos(root):
-     # Ocultar la ventana anterior
+    # Ocultar la ventana anterior
     root.withdraw() 
 
+    # Crear ventana con nuevo estilo
+    ventana_resultados = tk.Toplevel(root)
+    ventana_resultados.title("Resultados de Comprobación")
+    ventana_resultados.minsize(800, 600)
+    
+    # Frame principal
+    main_frame = ttk.Frame(ventana_resultados)
+    main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+    
     datos_dir = 'datos'
 
     # Comprobación de la existencia del directorio 'datos'
     if not os.path.exists(datos_dir):
         os.makedirs(datos_dir)
-        tk.messagebox.showinfo(
+        messagebox.showinfo(
             "Directorio creado",
             "Directorio 'datos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de datos a esta."
         )
-        # [!!!] Siento que este return es un crimen, comprobar más tarde
         return  # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
 
-    # [!!!] Sustituir......
-    # [!!!] Y comprobar que no explote por caracteres especiales....................
     archivos_requeridos = ['regimen_general.xls', 'todas_las_ensenanzas.xls', 'ensenanza_de_adultos.xls']
     archivos_presentes = os.listdir(datos_dir)
 
@@ -32,7 +37,6 @@ def comprobar_datos(root):
     def encontrar_curso(encabezados):
         for encabezado in encabezados:
             if isinstance(encabezado, str):
-                # Obtener el año según patrón
                 curso_match = re.search(r'\b\d{4}-\d{4}\b', encabezado)
                 if curso_match:
                     return curso_match.group(0)
@@ -41,10 +45,7 @@ def comprobar_datos(root):
     # Bucle de comprobación
     for archivo in archivos_requeridos:
         if archivo in archivos_presentes:
-            # ¿Está? Intenta sacar el año de dicho archivo y muestra un tic
             try:
-                # [X!!!] Suponiendo que el curso está en la primera fila, primera columna (Revisar......)
-                # > Se tenía que sacar del encabezado, no la primera fila/columna. Solucionado.
                 df = pd.read_excel(os.path.join(datos_dir, archivo), header=0)
                 curso_encontrado = encontrar_curso(df.columns)
 
@@ -53,25 +54,35 @@ def comprobar_datos(root):
                 else:
                     resultado.append((f"✅ {archivo}", "Curso no encontrado en el encabezado"))
             except Exception as e:
-                # En caso de que de excepción, devolver cruz.
                 resultado.append((f"❌ {archivo}", f"Error: {str(e)}"))
         else:
-            # ¿No está? devuelve cruz.
             resultado.append((f"❌ {archivo}", "Archivo no encontrado"))
 
-    # Creación de root (ventana)
-    ventana_resultados = tk.Toplevel(root)
-    ventana_resultados.title("Resultados de Comprobación")
-    ventana_resultados.minsize(600, 400)  # Tamaño mínimo de la ventana
+    # --- INTERFAZ GRÁFICA ---
+
+    # Treeview con scrollbar
+    tree_frame = ttk.Frame(main_frame)
+    tree_frame.pack(fill=tk.BOTH, expand=True)
     
-    # --- INTERFAZ GRÁFICA (WIP) ---
-    tree = ttk.Treeview(ventana_resultados, columns=("Documento", "Estado"), show="headings")
-    tree.heading("Documento", text="Documento")
+    tree = ttk.Treeview(tree_frame, columns=("Estado"), show="headings")
+    tree.heading("#0", text="Documento")
     tree.heading("Estado", text="Estado")
-    tree.pack(expand=True, fill=tk.BOTH)
-
+    
+    vsb = ttk.Scrollbar(tree_frame, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=vsb.set)
+    
+    tree.grid(row=0, column=0, sticky='nsew')
+    vsb.grid(row=0, column=1, sticky='ns')
+    
+    tree_frame.grid_rowconfigure(0, weight=1)
+    tree_frame.grid_columnconfigure(0, weight=1)
+    
     for estado, detalle in resultado:
-        tree.insert("", "end", values=(estado, detalle))
-
-    # Botón de Regresar
-    tk.Button(ventana_resultados, text="Regresar", command=lambda: [ventana_resultados.destroy(), root.deiconify()]).pack(pady=10, padx=20, fill=tk.BOTH)
+        tree.insert("", "end", text=estado, values=(detalle,))
+    
+    # Botón de Regresar con nuevo estilo
+    btn_frame = ttk.Frame(main_frame)
+    btn_frame.pack(fill=tk.X, pady=10)
+    
+    ttk.Button(btn_frame, text="Regresar", 
+              command=lambda: [ventana_resultados.destroy(), root.deiconify()]).pack(side=tk.RIGHT)

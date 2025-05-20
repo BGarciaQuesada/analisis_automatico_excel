@@ -3,7 +3,6 @@ from tkinter import ttk, messagebox
 import pandas as pd
 import os
 import re
-from plantilla import ModeloPlantilla
 
 class TablaPersonalizada:
     def __init__(self, root):
@@ -57,6 +56,7 @@ class TablaPersonalizada:
                     for fila in ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]} 
                     for tabla in self.tablas_disponibles}
         
+        # > Antes esto era una lista de botones gigante y lo considero cutre. Me gusta más la idea de varias pestañas        
         # Notebook para organizar las pestañas
         notebook = ttk.Notebook(ventana_seleccion)
         notebook.pack(fill=tk.BOTH, expand=True)
@@ -123,58 +123,58 @@ class TablaPersonalizada:
                 df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
                 df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
                 
-                # Filtrar por secciones
-                mascara_secciones = df.iloc[:, 0].isin(config['secciones'])
-                df_secciones = df[mascara_secciones].copy()
+                # > Con tanto borrado y cambio se me quedaron variables muertas. Ya no es el caso.
                 
-                # Para cada sección encontrada
+                # Procesar cada sección seleccionada
                 for seccion in config['secciones']:
-                    # Encontrar el rango de la sección
+                    # Encontrar el índice de la sección
                     idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
                     if not idx_seccion:
-                        continue
+                        continue  # Si no se encuentra la sección, pasar a la siguiente
                     
                     start_idx = idx_seccion[0]
                     end_idx = start_idx + 1
                     
-                    # Buscar el final de la sección
+                    # Buscar el final de la sección (hasta la siguiente sección o fin de dataframe)
                     while end_idx < len(df) and df.iloc[end_idx, 0] not in config['secciones']:
                         end_idx += 1
                     
-                    # Filtrar subsecciones dentro de este rango
+                    # Extraer solo esta sección
                     df_seccion = df.iloc[start_idx:end_idx].copy()
-                    mascara_sub = df_seccion.iloc[:, 0].isin(config['subsecciones'])
-                    df_subsecciones = df_seccion[mascara_sub].copy()
                     
-                    # Para cada subsección encontrada
-                    for sub in config['subsecciones']:
-                        idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == sub].tolist()
+                    # Procesar cada subsección seleccionada dentro de esta sección
+                    for subseccion in config['subsecciones']:
+                        # Encontrar el índice de la subsección
+                        idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == subseccion].tolist()
                         if not idx_sub:
-                            continue
+                            continue  # Si no se encuentra la subsección, pasar a la siguiente
                         
                         start_sub = idx_sub[0]
                         end_sub = start_sub + 1
                         
-                        # Buscar el final de la subsección (corregido paréntesis)
+                        # Buscar el final de la subsección (hasta la siguiente subsección o fin de sección)
                         while (end_sub < len(df_seccion)) and (df_seccion.iloc[end_sub, 0] not in config['subsecciones']):
                             end_sub += 1
                         
-                        # Filtrar filas objetivo
-                        df_sub = df_seccion.iloc[start_sub:end_sub].copy()
-                        mascara_filas = df_sub.iloc[:, 0].isin(config['filas'])
-                        df_filas = df_sub[mascara_filas].copy()
+                        # Extraer solo esta subsección
+                        df_subseccion = df_seccion.iloc[start_sub:end_sub].copy()
                         
+                        # Filtrar solo las filas objetivo dentro de esta subsección
+                        df_filas = df_subseccion[df_subseccion.iloc[:, 0].isin(config['filas'])].copy()
+                        
+                        # Si encontramos filas que coinciden, añadirlas a los resultados
                         if not df_filas.empty:
                             df_filas['Tabla'] = tabla
                             df_filas['Sección'] = seccion
-                            df_filas['Subsección'] = sub
+                            df_filas['Subsección'] = subseccion
                             resultados.append(df_filas)
             
-            except Exception as e:  # Añadido except faltante
+            except Exception as e:
                 messagebox.showerror("Error", f"Error procesando {tabla}:\n{e}")
                 return
         
         if resultados:
+            # Combinar todos los resultados
             df_final = pd.concat(resultados, ignore_index=True)
             
             # Eliminar columnas duplicadas si las hay
@@ -188,6 +188,7 @@ class TablaPersonalizada:
             messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
     
     def limpiar_texto(self, texto):
+        """Limpia el texto eliminando paréntesis y asteriscos"""
         if not isinstance(texto, str):
             return texto
         texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
@@ -195,8 +196,10 @@ class TablaPersonalizada:
         return texto.strip()
     
     def cerrar(self):
+        """Cierra la ventana y muestra la anterior"""
         self.ventana.destroy()
         self.root.deiconify()
 
 def mostrar_menu_personalizadas(root):
+    """Función principal para mostrar el menú de tablas personalizadas"""
     TablaPersonalizada(root)

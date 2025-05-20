@@ -1,38 +1,50 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import comprobacion_datos
 import tabla_predeterminada
 import tabla_personalizada
 import tutorial
 
 def main():
-    # Creación de root (ventana)
+    # Creación de root (ventana) con nuevo estilo
     root = tk.Tk()
     root.title("Gestor de Tablas MFYP")
-    root.minsize(600, 400)  # Tamaño mínimo de la ventana
-
+    root.minsize(800, 600)  # Tamaño mínimo más grande
+    
+    # Frame principal
+    main_frame = ttk.Frame(root)
+    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+    
     # Métodos a ser utilizados por los botones
     def on_comprobacion_datos():
-        root.withdraw()  # Ocultar la ventana actual
+        root.withdraw()
         comprobacion_datos.comprobar_datos(root)
 
     def on_tabla_predeterminada():
-        root.withdraw()  # Ocultar la ventana actual
+        root.withdraw()
         tabla_predeterminada.mostrar_menu_predeterminadas(root)
 
     def on_tabla_personalizada():
-        root.withdraw()  # Ocultar la ventana actual
+        root.withdraw()
         tabla_personalizada.mostrar_menu_personalizadas(root)
 
     def on_tutorial():
-        root.withdraw()  # Ocultar la ventana actual
+        root.withdraw()
         tutorial.mostrar_tutorial(root)
 
-    # --- INTERFAZ GRÁFICA (WIP) ---
-    tk.Button(root, text="Comprobación de Datos", command=on_comprobacion_datos, width=20, height=2).pack(pady=10, padx=20, expand=True, fill=tk.BOTH)
-    tk.Button(root, text="Tabla Predeterminada", command=on_tabla_predeterminada, width=20, height=2).pack(pady=10, padx=20, expand=True, fill=tk.BOTH)
-    tk.Button(root, text="Tabla Personalizada", command=on_tabla_personalizada, width=20, height=2).pack(pady=10, padx=20, expand=True, fill=tk.BOTH)
-    tk.Button(root, text="Tutorial", command=on_tutorial, width=20, height=2).pack(pady=10, padx=20, expand=True, fill=tk.BOTH)
+    # --- INTERFAZ GRÁFICA ---
+    
+    btn_style = ttk.Style()
+    btn_style.configure('TButton', font=('Arial', 12), padding=10)
+    
+    ttk.Button(main_frame, text="Comprobación de Datos", 
+              command=on_comprobacion_datos, style='TButton').pack(pady=10, fill=tk.X)
+    ttk.Button(main_frame, text="Tabla Predeterminada", 
+              command=on_tabla_predeterminada, style='TButton').pack(pady=10, fill=tk.X)
+    ttk.Button(main_frame, text="Tabla Personalizada", 
+              command=on_tabla_personalizada, style='TButton').pack(pady=10, fill=tk.X)
+    ttk.Button(main_frame, text="Tutorial", 
+              command=on_tutorial, style='TButton').pack(pady=10, fill=tk.X)
 
     root.mainloop()
 
