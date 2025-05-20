@@ -1,120 +1,202 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import pandas as pd
 import os
+import re
 from plantilla import ModeloPlantilla
 
-# [!!!] CUANDO SE CIERRA EL PROGRAMA DESDE CUALQUIER VENTANA QUE NO SEA LA MAIN NO SE MATA AL PROGRAMA!!!!!!!!!
-# [!!!] Es una tontería, ver ahora
-
-#  No se encuentra el archivo. Investigar mañana.
+class TablaPersonalizada:
+    def __init__(self, root):
+        self.root = root
+        self.root.withdraw()
+        
+        self.ventana = tk.Toplevel(root)
+        self.ventana.title("Tablas Personalizadas")
+        self.ventana.minsize(800, 600)
+        
+        # Variables para almacenar selecciones
+        self.tablas_seleccionadas = []
+        self.tablas_disponibles = ["regimen_general", "infantil", "primaria"]
+        
+        # Interfaz
+        self.crear_interfaz()
+        
+    def crear_interfaz(self):
+        # Frame principal
+        main_frame = ttk.Frame(self.ventana)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # Lista de tablas seleccionadas
+        self.lista_tablas = ttk.Treeview(main_frame, columns=('config',), show='headings')
+        self.lista_tablas.heading('#0', text='Tabla')
+        self.lista_tablas.heading('config', text='Configuración')
+        self.lista_tablas.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Botones
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Button(btn_frame, text="Añadir Tabla", command=self.agregar_tabla).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Generar Excel", command=self.generar_excel).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_frame, text="Regresar", command=self.cerrar).pack(side=tk.RIGHT, padx=5)
+    
+    def agregar_tabla(self):
+        ventana_seleccion = tk.Toplevel(self.ventana)
+        ventana_seleccion.title("Seleccionar Tabla")
+        
+        # Variables para almacenar selecciones
+        var_secciones = {tabla: {seccion: tk.BooleanVar() 
+                        for seccion in ["TODOS LOS CENTROS", "CENTROS PÚBLICOS"]} 
+                        for tabla in self.tablas_disponibles}
+        
+        var_subsecciones = {tabla: {sub: tk.BooleanVar() 
+                           for sub in ["AMBOS SEXOS", "Hombres", "Mujeres"]} 
+                           for tabla in self.tablas_disponibles}
+        
+        var_filas = {tabla: {fila: tk.BooleanVar() 
+                    for fila in ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]} 
+                    for tabla in self.tablas_disponibles}
+        
+        # Notebook para organizar las pestañas
+        notebook = ttk.Notebook(ventana_seleccion)
+        notebook.pack(fill=tk.BOTH, expand=True)
+        
+        for tabla in self.tablas_disponibles:
+            tab_frame = ttk.Frame(notebook)
+            notebook.add(tab_frame, text=tabla)
+            
+            # Secciones
+            ttk.Label(tab_frame, text="Secciones:").grid(row=0, column=0, sticky=tk.W, padx=5, pady=5)
+            for i, seccion in enumerate(["TODOS LOS CENTROS", "CENTROS PÚBLICOS"]):
+                cb = ttk.Checkbutton(tab_frame, text=seccion, variable=var_secciones[tabla][seccion])
+                cb.grid(row=i+1, column=0, sticky=tk.W, padx=20, pady=2)
+            
+            # Subsecciones
+            ttk.Label(tab_frame, text="Subsecciones:").grid(row=0, column=1, sticky=tk.W, padx=5, pady=5)
+            for i, sub in enumerate(["AMBOS SEXOS", "Hombres", "Mujeres"]):
+                cb = ttk.Checkbutton(tab_frame, text=sub, variable=var_subsecciones[tabla][sub])
+                cb.grid(row=i+1, column=1, sticky=tk.W, padx=20, pady=2)
+            
+            # Filas objetivo
+            ttk.Label(tab_frame, text="Filas objetivo:").grid(row=0, column=2, sticky=tk.W, padx=5, pady=5)
+            for i, fila in enumerate(["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]):
+                cb = ttk.Checkbutton(tab_frame, text=fila, variable=var_filas[tabla][fila])
+                cb.grid(row=i+1, column=2, sticky=tk.W, padx=20, pady=2)
+        
+        # Botón para confirmar
+        def confirmar():
+            for tabla in self.tablas_disponibles:
+                secciones = [s for s in var_secciones[tabla] if var_secciones[tabla][s].get()]
+                subsecciones = [s for s in var_subsecciones[tabla] if var_subsecciones[tabla][s].get()]
+                filas = [f for f in var_filas[tabla] if var_filas[tabla][f].get()]
+                
+                if secciones and subsecciones and filas:
+                    config = {
+                        'secciones': secciones,
+                        'subsecciones': subsecciones,
+                        'filas': filas
+                    }
+                    self.tablas_seleccionadas.append((tabla, config))
+                    self.lista_tablas.insert('', tk.END, text=tabla, values=(str(config)))
+            
+            ventana_seleccion.destroy()
+        
+        ttk.Button(ventana_seleccion, text="Confirmar", command=confirmar).pack(pady=10)
+    
+    def generar_excel(self):
+        if not self.tablas_seleccionadas:
+            messagebox.showwarning("Advertencia", "No hay tablas seleccionadas")
+            return
+        
+        # Crear directorio si no existe
+        if not os.path.exists('resultados'):
+            os.makedirs('resultados')
+        
+        # Procesar cada tabla seleccionada
+        resultados = []
+        for tabla, config in self.tablas_seleccionadas:
+            try:
+                archivo = f"datos/{tabla}.xls"
+                df = pd.read_excel(archivo, header=6)
+                
+                # Limpiar nombres de columnas
+                df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
+                df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
+                
+                # Filtrar por secciones
+                mascara_secciones = df.iloc[:, 0].isin(config['secciones'])
+                df_secciones = df[mascara_secciones].copy()
+                
+                # Para cada sección encontrada
+                for seccion in config['secciones']:
+                    # Encontrar el rango de la sección
+                    idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
+                    if not idx_seccion:
+                        continue
+                    
+                    start_idx = idx_seccion[0]
+                    end_idx = start_idx + 1
+                    
+                    # Buscar el final de la sección
+                    while end_idx < len(df) and df.iloc[end_idx, 0] not in config['secciones']:
+                        end_idx += 1
+                    
+                    # Filtrar subsecciones dentro de este rango
+                    df_seccion = df.iloc[start_idx:end_idx].copy()
+                    mascara_sub = df_seccion.iloc[:, 0].isin(config['subsecciones'])
+                    df_subsecciones = df_seccion[mascara_sub].copy()
+                    
+                    # Para cada subsección encontrada
+                    for sub in config['subsecciones']:
+                        idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == sub].tolist()
+                        if not idx_sub:
+                            continue
+                        
+                        start_sub = idx_sub[0]
+                        end_sub = start_sub + 1
+                        
+                        # Buscar el final de la subsección (corregido paréntesis)
+                        while (end_sub < len(df_seccion)) and (df_seccion.iloc[end_sub, 0] not in config['subsecciones']):
+                            end_sub += 1
+                        
+                        # Filtrar filas objetivo
+                        df_sub = df_seccion.iloc[start_sub:end_sub].copy()
+                        mascara_filas = df_sub.iloc[:, 0].isin(config['filas'])
+                        df_filas = df_sub[mascara_filas].copy()
+                        
+                        if not df_filas.empty:
+                            df_filas['Tabla'] = tabla
+                            df_filas['Sección'] = seccion
+                            df_filas['Subsección'] = sub
+                            resultados.append(df_filas)
+            
+            except Exception as e:  # Añadido except faltante
+                messagebox.showerror("Error", f"Error procesando {tabla}:\n{e}")
+                return
+        
+        if resultados:
+            df_final = pd.concat(resultados, ignore_index=True)
+            
+            # Eliminar columnas duplicadas si las hay
+            df_final = df_final.loc[:, ~df_final.columns.duplicated()]
+            
+            # Guardar el resultado
+            archivo_salida = "resultados/tabla_personalizada.xlsx"
+            df_final.to_excel(archivo_salida, index=False)
+            messagebox.showinfo("Éxito", f"Archivo generado:\n{archivo_salida}")
+        else:
+            messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
+    
+    def limpiar_texto(self, texto):
+        if not isinstance(texto, str):
+            return texto
+        texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
+        texto = re.sub(r"\s*\*.*$", "", texto)
+        return texto.strip()
+    
+    def cerrar(self):
+        self.ventana.destroy()
+        self.root.deiconify()
 
 def mostrar_menu_personalizadas(root):
-    # Ocultar la ventana anterior
-    root.withdraw()
-
-    # Crear root (ventana)
-    ventana_personalizadas = tk.Toplevel(root)
-    ventana_personalizadas.title("Tablas Personalizadas")
-    ventana_personalizadas.minsize(600, 400)  # Tamaño mínimo de la ventana
-
-    tablas_disponibles = ["regimen_general", "infantil", "primaria"]
-    tablas_seleccionadas = []
-
-    # --- INTERFAZ GRÁFICA (WIP) ---
-
-    # Lista donde se agregan las tablas a juntar
-    def agregar_tabla():
-        ventana_seleccion = tk.Toplevel(ventana_personalizadas)
-        ventana_seleccion.title("Seleccionar Tabla")
-
-        # Al seleccionar una tabla, mostrar las casillas a marcar
-        def seleccionar_tabla(tabla):
-            ventana_configuracion = tk.Toplevel(ventana_seleccion)
-            ventana_configuracion.title(f"Configurar {tabla}")
-
-            # Cajas marcables para secciones
-            opciones_secciones = ["TODOS LOS CENTROS", "CENTROS PÚBLICOS"]
-            var_secciones = {opcion: tk.IntVar() for opcion in opciones_secciones}
-
-            # Cajas marcables para subsecciones
-            opciones_subsecciones = ["AMBOS SEXOS", "Hombres", "Mujeres"]
-            var_subsecciones = {opcion: tk.IntVar() for opcion in opciones_subsecciones}
-
-            # Cajas marcables para filas objetivo
-            opciones_filas = ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]
-            var_filas = {opcion: tk.IntVar() for opcion in opciones_filas}
-
-            # Método para saber qué se ha marcado en cada una
-            def guardar_configuracion():
-                secciones_seleccionadas = [opcion for opcion, var in var_secciones.items() if var.get()]
-                subsecciones_seleccionadas = [opcion for opcion, var in var_subsecciones.items() if var.get()]
-                filas_seleccionadas = [opcion for opcion, var in var_filas.items() if var.get()]
-
-                if secciones_seleccionadas and subsecciones_seleccionadas and filas_seleccionadas:
-                    configuracion = {
-                        'secciones': secciones_seleccionadas,
-                        'subsecciones': subsecciones_seleccionadas,
-                        'filas_objetivo': filas_seleccionadas
-                    }
-                    tablas_seleccionadas.append((tabla, configuracion))
-                    listbox_tablas.insert(tk.END, f"{tabla} (Secciones: {', '.join(secciones_seleccionadas)}, Subsecciones: {', '.join(subsecciones_seleccionadas)}, Filas: {', '.join(filas_seleccionadas)})")
-                ventana_configuracion.destroy()
-                ventana_seleccion.destroy()
-
-            tk.Label(ventana_configuracion, text="Secciones:").pack(anchor=tk.W)
-            for opcion in opciones_secciones:
-                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_secciones[opcion]).pack(anchor=tk.W)
-
-            tk.Label(ventana_configuracion, text="Subsecciones:").pack(anchor=tk.W)
-            for opcion in opciones_subsecciones:
-                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_subsecciones[opcion]).pack(anchor=tk.W)
-
-            tk.Label(ventana_configuracion, text="Filas Objetivo:").pack(anchor=tk.W)
-            for opcion in opciones_filas:
-                tk.Checkbutton(ventana_configuracion, text=opcion, variable=var_filas[opcion]).pack(anchor=tk.W)
-
-            tk.Button(ventana_configuracion, text="Guardar", command=guardar_configuracion).pack(pady=5)
-
-        for tabla in tablas_disponibles:
-            tk.Button(ventana_seleccion, text=tabla, command=lambda t=tabla: seleccionar_tabla(t)).pack(pady=5)
-
-    # Método para generar xls
-    def generar_xls():
-        if not tablas_seleccionadas:
-            messagebox.showwarning("Advertencia", "Debes seleccionar al menos una tabla.")
-            return
-
-        # Comprobación de la existencia del directorio 'resultados'
-        resultados_dir = 'resultados'
-        if not os.path.exists(resultados_dir):
-            os.makedirs(resultados_dir)
-            messagebox.showinfo(
-                "Directorio creado",
-                "Directorio 'resultados' no encontrado, se ha creado de nuevo. Las tablas personalizadas se guardaran en esta."
-            )
-
-        archivos_entrada = [f'datos/{tabla}.xls' for tabla, _ in tablas_seleccionadas]
-        archivo_salida = 'resultados/tabla_personalizada.xlsx'
-        configuraciones = [config for _, config in tablas_seleccionadas]
-
-        # Usar la primera configuración para secciones, subsecciones y filas_objetivo
-        modelo_plantilla = ModeloPlantilla(
-            archivos_entrada=archivos_entrada,
-            archivo_salida=archivo_salida,
-            secciones=configuraciones[0]['secciones'],
-            subsecciones=configuraciones[0]['subsecciones'],
-            filas_objetivo=configuraciones[0]['filas_objetivo']
-        )
-        modelo_plantilla.ejecutar_modelo(ventana_personalizadas)
-
-    # Lista
-    listbox_tablas = tk.Listbox(ventana_personalizadas, height=15)  # Vertical
-    listbox_tablas.pack(pady=10, padx=20, fill=tk.X, expand=False) # Horizontal (Expansión)
-
-    # Botones
-    tk.Button(ventana_personalizadas, text="+", command=agregar_tabla).pack(pady=5, padx=20, fill=tk.BOTH)
-    tk.Button(ventana_personalizadas, text="Generar XLS", command=generar_xls).pack(pady=5, padx=20, fill=tk.BOTH)
-
-    # Botón de Regresar
-    tk.Button(ventana_personalizadas, text="Regresar", command=lambda: [ventana_personalizadas.destroy(), root.deiconify()]).pack(pady=5, padx=20, fill=tk.BOTH)
+    TablaPersonalizada(root)

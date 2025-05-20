@@ -6,75 +6,82 @@ from tkinter import messagebox
 
 class ModeloPlantilla:
     def __init__(self, archivos_entrada, archivo_salida, secciones, subsecciones, filas_objetivo):
-        self.archivos_entrada = archivos_entrada  # Lista de archivos de entrada
+        self.archivos_entrada = archivos_entrada
         self.archivo_salida = archivo_salida
-        self.secciones = secciones  # Lista de secciones a buscar
-        self.subsecciones = subsecciones  # Lista de subsecciones a buscar
-        self.filas_objetivo = filas_objetivo  # Lista de filas objetivo a extraer
+        self.secciones = secciones
+        self.subsecciones = subsecciones
+        self.filas_objetivo = filas_objetivo
 
-    def limpiar_titulo(self, titulo):
-        titulo = re.sub(r"\s*[\(\[].*?[\)\]]", "", titulo)
-        titulo = re.sub(r"\s*\*.*$", "", titulo)
-        titulo = titulo.strip()
-        return titulo
+    def limpiar_texto(self, texto):
+        if not isinstance(texto, str):
+            return texto
+        texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
+        texto = re.sub(r"\s*\*.*$", "", texto)
+        return texto.strip()
 
     def ejecutar_modelo(self, root):
-        # Asegurarse de que el directorio 'datos' exista
-        if not os.path.exists('datos'):
-            os.makedirs('datos')
-            messagebox.showinfo("Información", f"El directorio 'datos' no existía y fue creado. Por favor, coloca los archivos en esa carpeta.")
-            return
-
-        df_final = pd.DataFrame()  # DataFrame para almacenar los resultados
-
-        for archivo in self.archivos_entrada:
-            try:
-                # Cargar el Excel CON ENCABEZADOS desde la fila 7
+        try:
+            # Verificar directorio de datos
+            if not os.path.exists('datos'):
+                os.makedirs('datos')
+                raise FileNotFoundError("Directorio 'datos' creado. Coloque los archivos allí.")
+            
+            resultados = []
+            
+            for archivo in self.archivos_entrada:
+                # Leer archivo
                 df = pd.read_excel(archivo, header=6)
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudo cargar el archivo '{archivo}':\n{e}")
-                return
-
-            # Limpieza de títulos de columnas
-            df.columns = [self.limpiar_titulo(col) if isinstance(col, str) else col for col in df.columns]
-
-            # Limpieza de títulos de la primera columna
-            df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_titulo(x.strip()) if isinstance(x, str) else x)
-
-            # Encontrar índices de las secciones
-            secciones_indices = {seccion: df[df.iloc[:, 0] == seccion].index for seccion in self.secciones}
-
-            if any(index.empty for index in secciones_indices.values()):
-                messagebox.showerror("Error", f"No se encontraron todas las secciones necesarias en el archivo {archivo}.")
-                return
-
-            # Filtrar la sección desde la primera sección hasta el final del archivo
-            df_seccion = df.iloc[secciones_indices[self.secciones[0]][0]:]
-
-            # Encontrar índices dentro de la sección filtrada para las subsecciones
-            subsecciones_indices = {subseccion: df_seccion[df_seccion.iloc[:, 0] == subseccion].index for subseccion in self.subsecciones}
-
-            if any(index.empty for index in subsecciones_indices.values()):
-                messagebox.showerror("Error", f"No se encontraron todas las subsecciones necesarias en el archivo {archivo}.")
-                return
-
-            # Extraer filas objetivo en cada subsección
-            for subseccion in self.subsecciones:
-                start_idx = subsecciones_indices[subseccion][0]
-                end_idx = start_idx + 1  # Asumimos que cada subsección tiene al menos una fila de datos
-                while end_idx < len(df_seccion) and df_seccion.iloc[end_idx, 0] not in self.subsecciones:
-                    end_idx += 1
                 
-                df_subseccion = df_seccion.iloc[start_idx:end_idx]
-
-                # Filtrar filas que coincidan con las filas objetivo
-                df_filtrado = df_subseccion[df_subseccion.iloc[:, 0].isin(self.filas_objetivo)]
-
-                # Solo agregar si hay coincidencias
-                if not df_filtrado.empty:
-                    df_final = pd.concat([df_final, df_filtrado])
-
-        # Guardar el resultado en un archivo Excel
-        df_final.to_excel(self.archivo_salida, index=True)
-
-        messagebox.showinfo("Éxito", f"Tabla generada y guardada en {self.archivo_salida}.")
+                # Limpiar columnas
+                df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
+                df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
+                
+                # Procesar cada sección
+                for seccion in self.secciones:
+                    # Encontrar la sección
+                    idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
+                    if not idx_seccion:
+                        continue
+                    
+                    start = idx_seccion[0]
+                    end = start + 1
+                    
+                    # Encontrar el final de la sección
+                    while end < len(df) and df.iloc[end, 0] not in self.secciones:
+                        end += 1
+                    
+                    # Filtrar subsecciones
+                    df_seccion = df.iloc[start:end].copy()
+                    
+                    for sub in self.subsecciones:
+                        idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == sub].tolist()
+                        if not idx_sub:
+                            continue
+                        
+                        start_sub = idx_sub[0]
+                        end_sub = start_sub + 1
+                        
+                        # Encontrar el final de la subsección
+                        while (end_sub < len(df_seccion)) and (df_seccion.iloc[end_sub, 0] not in self.subsecciones):
+                            end_sub += 1
+                        
+                        # Filtrar filas objetivo
+                        df_sub = df_seccion.iloc[start_sub:end_sub].copy()
+                        df_filas = df_sub[df_sub.iloc[:, 0].isin(self.filas_objetivo)].copy()
+                        
+                        if not df_filas.empty:
+                            df_filas['Archivo'] = os.path.basename(archivo)
+                            df_filas['Sección'] = seccion
+                            df_filas['Subsección'] = sub
+                            resultados.append(df_filas)
+            
+            if resultados:
+                df_final = pd.concat(resultados, ignore_index=True)
+                df_final = df_final.loc[:, ~df_final.columns.duplicated()]
+                df_final.to_excel(self.archivo_salida, index=False)
+                messagebox.showinfo("Éxito", f"Archivo generado:\n{self.archivo_salida}")
+            else:
+                messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Ocurrió un error:\n{str(e)}")
