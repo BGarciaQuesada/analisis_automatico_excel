@@ -17,6 +17,7 @@ class TutorialApp:
         
         # Configuración de pasos del tutorial
         self.pasos = [
+            # La primera imagen (bienvenida) no lleva a nada, es para comprobar el placeholder, sustituir luego
             {
                 "titulo": "Bienvenido al Gestor de Tablas MEFYP",
                 "imagen": "imagenes/bienvenida.png",
@@ -214,7 +215,7 @@ class TutorialApp:
                 new_width = int(max_height * img_ratio)
             
             img_resized = img.resize((new_width, new_height), Image.LANCZOS)
-            img_tk = ImageTk.PhotoImage(img_resized)
+            self.img_tk = ImageTk.PhotoImage(img_resized)  # Guardar como atributo
             
             # Calcular posición centrada
             x_pos = (canvas_width - new_width) // 2
@@ -225,7 +226,7 @@ class TutorialApp:
                 x_pos + margin, 
                 y_pos + margin, 
                 anchor=tk.NW, 
-                image=img_tk
+                image=self.img_tk
             )
 
         # Mensaje de error si no se encontrase la imagen  
