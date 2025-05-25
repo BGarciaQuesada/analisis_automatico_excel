@@ -1,62 +1,263 @@
 import tkinter as tk
 from tkinter import ttk
+from PIL import Image, ImageTk, ImageDraw, ImageFont  # Para las imagenes
+import os
+import webbrowser  # Funcionalidad del enlace
 
-# [!!!] Ahora mismo esto es un tochaco de texto. Pretendo sustituirlo luego con imagenes.
+class TutorialApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.withdraw()
+        
+        # Crear ventana de tutorial
+        self.ventana = tk.Toplevel(root)
+        self.ventana.title("Tutorial - Gestor de Tablas MEFYP")
+        self.ventana.minsize(600, 400)
+        self.ventana.geometry("1000x700")
+        
+        # Configuración de pasos del tutorial
+        self.pasos = [
+            {
+                "titulo": "Bienvenido al Gestor de Tablas MEFYP",
+                "imagen": "imagenes/bienvenida.png",
+                "texto": "La función de este programa es agilizar el proceso de creación de tablas para el informe elaborado por el Consejo Escolar Andalucía en relación a las cifras de educación."
+            },
+            {
+                "titulo": "Descarga de los archivos",
+                "imagen": "imagenes/paso1.png",
+                "texto": "Acceda al portal de datos abiertos del MEFYP (localizado abajo) y seleccione la estadística pertinente",
+                "enlace": "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/estadisticas.html"
+            },
+            {
+                "titulo": "Descarga de los archivos",
+                "imagen": "imagenes/paso2.png",
+                "texto": "Se le presentarán las distintas secciones.\nAl nutrirse la mayoría de Estadísticas del MEFD → Enseñanzas no universitarias, seguiremos esta ruta en el tutorial."
+            },
+            {
+                "titulo": "Descarga de los archivos",
+                "imagen": "imagenes/paso3.png",
+                "texto": "Elija el año del que quiera recoger los datos.\n\nRecuerde que siempre puede comprobar el año de cada archivo en 'Comprobación de Datos' desde el menú principal."
+            },
+            {
+                "titulo": "Descarga de los archivos",
+                "imagen": "imagenes/paso4.png",
+                "texto": "Haga click en el símbolo a la derecha del nombre de la tabla [Eb] para acceder a las descargas."
+            },
+            {
+                "titulo": "Descarga de los archivos",
+                "imagen": "imagenes/paso5.png",
+                "texto": "Descargue las tablas necesarias:\n\n- Haga clic en la flecha a la izquierda de cada una para descarga directa o, alternativamente, en el nombre para realizar una consulta manual"
+            }
+        ]
+        
+        self.paso_actual = 0
+        
+        # Configurar interfaz
+        self.setup_ui()
+        self.mostrar_paso()
+    
+    # --- INTERFAZ GRÁFICA ---
+
+    # Método para configurar todos los elementos
+    def setup_ui(self):
+        # Frame principal
+        main_frame = ttk.Frame(self.ventana)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        
+        # Título del paso
+        self.titulo = ttk.Label(
+            main_frame, 
+            font=('Arial', 14, 'bold'),
+            justify=tk.CENTER
+        )
+        self.titulo.pack(pady=10)
+        
+        # Contenedor de imagen
+        img_frame = ttk.Frame(main_frame)
+        img_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Canvas para la imagen
+        self.canvas = tk.Canvas(img_frame, bg='#f0f0f0', highlightthickness=0)
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+        
+        # Frame para el texto descriptivo
+        texto_frame = ttk.Frame(main_frame)
+        texto_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        
+        self.texto = tk.Text(
+            texto_frame, 
+            wrap=tk.WORD, 
+            font=('Arial', 11),
+            height=5,
+            padx=10,
+            pady=10,
+            bg='#f9f9f9',
+            relief=tk.FLAT
+        )
+        self.texto.pack(fill=tk.BOTH, expand=True)
+        
+        # Frame para botones de navegación
+        btn_frame = ttk.Frame(main_frame)
+        btn_frame.pack(fill=tk.X, pady=10)
+        
+        # Botones de navegación
+        self.btn_anterior = ttk.Button(
+            btn_frame, 
+            text="← Anterior",
+            command=self.anterior_paso,
+            state=tk.DISABLED
+        )
+        self.btn_anterior.pack(side=tk.LEFT, padx=5)
+        
+        self.btn_siguiente = ttk.Button(
+            btn_frame, 
+            text="Siguiente →",
+            command=self.siguiente_paso
+        )
+        self.btn_siguiente.pack(side=tk.RIGHT, padx=5)
+        
+        ttk.Button(
+            btn_frame, 
+            text="Regresar",
+            command=self.cerrar_tutorial
+        ).pack(side=tk.RIGHT, padx=20)
+        
+        # Contador de pasos
+        self.contador = ttk.Label(
+            btn_frame,
+            font=('Arial', 10, 'bold'),
+            foreground='#555555'
+        )
+        self.contador.pack(side=tk.BOTTOM, pady=5)
+    
+    # Método para mostrar el paso actual
+    def mostrar_paso(self):
+        self.ventana.update_idletasks()  # Actualiza geometría
+        
+        paso = self.pasos[self.paso_actual]
+        
+        # Actualizar título
+        self.titulo.config(text=paso["titulo"])
+        
+        # Actualizar texto
+        self.texto.config(state=tk.NORMAL)
+        self.texto.delete(1.0, tk.END)
+        self.texto.insert(tk.END, paso["texto"])
+        
+        # Añadir enlace si existe
+        if "enlace" in paso:
+            self.texto.insert(tk.END, "\n\n[Enlace oficial]", "enlace")
+            self.texto.tag_config("enlace", foreground="blue", underline=1)
+            self.texto.tag_bind("enlace", "<Button-1>", 
+                              lambda e: webbrowser.open(paso["enlace"]))
+            self.texto.tag_bind("enlace", "<Enter>", 
+                              lambda e: self.texto.config(cursor="hand2"))
+            self.texto.tag_bind("enlace", "<Leave>", 
+                              lambda e: self.texto.config(cursor=""))
+        
+        self.texto.config(state=tk.DISABLED)
+        
+        # Cargar y mostrar imagen
+        self.mostrar_imagen(paso["imagen"])
+        
+        # Actualizar contador
+        self.contador.config(text=f"Paso {self.paso_actual + 1}/{len(self.pasos)}")
+        
+        # Actualizar estado de los botones
+        self.btn_anterior.config(state=tk.NORMAL if self.paso_actual > 0 else tk.DISABLED)
+        self.btn_siguiente.config(
+            text="Finalizar" if self.paso_actual == len(self.pasos) - 1 else "Siguiente →"
+        )
+    
+    # Renderizar imagen del paso actual REDIMENSIONADA
+    def mostrar_imagen(self, ruta_imagen):
+        try:
+            # Limpiar canvas
+            self.canvas.delete("all")
+            
+            # Obtener dimensiones del canvas
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            # Valores por defecto si el canvas es muy pequeño
+            if canvas_width < 100 or canvas_height < 100:
+                canvas_width = 800
+                canvas_height = 500
+            
+            # Margen para no pegar la imagen a los bordes
+            margin = 20
+            max_width = canvas_width - margin * 2
+            max_height = canvas_height - margin * 2
+            
+            # Cargar imagen (texto en caso de error)
+            if os.path.exists(ruta_imagen):
+                img = Image.open(ruta_imagen)
+            else:
+                img = Image.new('RGB', (800, 500), color='#f0f0f0')
+                draw = ImageDraw.Draw(img)
+                try:
+                    font = ImageFont.truetype("arial.ttf", 20)
+                except:
+                    font = ImageFont.load_default()
+                draw.text((50, 50), f"Imagen no encontrada:\n{ruta_imagen}", 
+                         fill="red", font=font)
+            
+            # Redimensionar manteniendo relación de aspecto
+            img_ratio = img.width / img.height
+            canvas_ratio = max_width / max_height
+            
+            if img_ratio > canvas_ratio:
+                new_width = max_width
+                new_height = int(max_width / img_ratio)
+            else:
+                new_height = max_height
+                new_width = int(max_height * img_ratio)
+            
+            img_resized = img.resize((new_width, new_height), Image.LANCZOS)
+            img_tk = ImageTk.PhotoImage(img_resized)
+            
+            # Calcular posición centrada
+            x_pos = (canvas_width - new_width) // 2
+            y_pos = (canvas_height - new_height) // 2
+            
+            # Mostrar imagen en canvas
+            self.canvas.create_image(
+                x_pos + margin, 
+                y_pos + margin, 
+                anchor=tk.NW, 
+                image=img_tk
+            )
+
+        # Mensaje de error si no se encontrase la imagen  
+        except Exception as e:
+            print(f"Error cargando imagen: {e}")
+            self.canvas.create_text(
+                canvas_width//2, 
+                canvas_height//2, 
+                text=f"Error cargando imagen:\n{e}",
+                fill="red",
+                font=('Arial', 12),
+                anchor=tk.CENTER
+            )
+    
+    # Método para avanzar (se bloquea si está en el primero paso)
+    def siguiente_paso(self):
+        if self.paso_actual < len(self.pasos) - 1:
+            self.paso_actual += 1
+            self.mostrar_paso()
+        else:
+            self.cerrar_tutorial()
+
+    # Método para avanzar (LUEGO SE TIENE QUE CAMBIAR A FINALIZAR)
+    def anterior_paso(self):
+        if self.paso_actual > 0:
+            self.paso_actual -= 1
+            self.mostrar_paso()
+    
+    # Cerrar ventana
+    def cerrar_tutorial(self):
+        self.ventana.destroy()
+        self.root.deiconify()
 
 def mostrar_tutorial(root):
-    # Ocultar la ventana anterior
-    root.withdraw()
-
-    # Crear ventana con nuevo estilo
-    ventana_tutorial = tk.Toplevel(root)
-    ventana_tutorial.title("Tutorial")
-    ventana_tutorial.minsize(800, 600)
-    
-    # Frame principal
-    main_frame = ttk.Frame(ventana_tutorial)
-    main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-    
-    # Texto del tutorial con scrollbar
-    texto_frame = ttk.Frame(main_frame)
-    texto_frame.pack(fill=tk.BOTH, expand=True)
-    
-    texto = tk.Text(texto_frame, wrap=tk.WORD, font=('Arial', 11))
-    vsb = ttk.Scrollbar(texto_frame, orient="vertical", command=texto.yview)
-    texto.configure(yscrollcommand=vsb.set)
-    
-    texto.grid(row=0, column=0, sticky='nsew')
-    vsb.grid(row=0, column=1, sticky='ns')
-    
-    texto_frame.grid_rowconfigure(0, weight=1)
-    texto_frame.grid_columnconfigure(0, weight=1)
-    
-    tutorial_text = """
-    Bienvenido al Gestor de Tablas MFYP.
-
-    Instrucciones:
-    1. Descarga las tablas de la página oficial de MFYP en formato .xls.
-    2. Guarda los archivos en la carpeta 'Datos' con los siguientes nombres:
-       - regimen_general.xls
-       - todas_las_ensenanzas.xls
-       - ensenanza_de_adultos.xls
-    3. Utiliza el menú principal para:
-       - Comprobar datos: Verifica archivos y muestra el curso
-       - Crear tablas predeterminadas: Basadas en plantillas
-       - Crear tablas personalizadas: Según tus especificaciones
-       - Ver este tutorial: Mensaje de ayuda
-
-    Consejos:
-    - Verifica siempre que los archivos tienen el formato correcto
-    - Si hay errores, revisa los nombres de los archivos
-    - Las tablas personalizadas permiten combinar múltiples criterios
-    """
-    
-    texto.insert(tk.END, tutorial_text)
-    texto.config(state=tk.DISABLED)
-    
-    # Botón de Regresar con nuevo estilo
-    btn_frame = ttk.Frame(main_frame)
-    btn_frame.pack(fill=tk.X, pady=10)
-    
-    ttk.Button(btn_frame, text="Regresar", 
-              command=lambda: [ventana_tutorial.destroy(), root.deiconify()]).pack(side=tk.RIGHT)
+    TutorialApp(root)

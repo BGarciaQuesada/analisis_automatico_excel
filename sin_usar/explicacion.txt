@@ -1,3 +1,0 @@
-Esta carpeta contiene archivos, clases y resultados obsoletos. 
-Los conservo aquí en caso de querer construir a partir de ellos.
-Más tarde, se eliminará está carpeta, además de que su contenido irá variando.
