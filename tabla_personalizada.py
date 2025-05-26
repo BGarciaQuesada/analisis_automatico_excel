@@ -146,14 +146,22 @@ class TablaPersonalizada:
             return
         
         # Crear directorio si no existe
-        if not os.path.exists('resultados'):
-            os.makedirs('resultados')
+        try:
+            if not os.path.exists('resultados'):
+                os.makedirs('resultados')
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo crear el directorio 'resultados':\n{e}")
+            return
         
         # Procesar cada tabla seleccionada
         resultados = []
         for tabla, config in self.tablas_seleccionadas:
             try:
                 archivo = f"datos/{tabla}.xls"
+                if not os.path.exists(archivo):
+                    messagebox.showwarning("Advertencia", f"Archivo no encontrado: {archivo}")
+                    continue
+                
                 df = pd.read_excel(archivo, header=6)
                 
                 # Limpiar nombres de columnas
@@ -162,11 +170,18 @@ class TablaPersonalizada:
                 
                 # > Con tanto borrado y cambio se me quedaron variables muertas. Ya no es el caso.
                 
+                # Debug: Mostrar información de las tablas cargadas
+                print(f"\nProcesando tabla: {tabla}")
+                print("Columnas:", df.columns.tolist())
+                print("Primeras filas de la primera columna:")
+                print(df.iloc[:, 0].head(20))
+                
                 # Procesar cada sección seleccionada
                 for seccion in config['secciones']:
                     # Encontrar el índice de la sección
                     idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
                     if not idx_seccion:
+                        print(f"Sección no encontrada: {seccion}")
                         continue  # Si no se encuentra la sección, pasar a la siguiente
                     
                     start_idx = idx_seccion[0]
@@ -184,6 +199,7 @@ class TablaPersonalizada:
                         # Encontrar el índice de la subsección
                         idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == subseccion].tolist()
                         if not idx_sub:
+                            print(f"Subsección no encontrada: {subseccion}")
                             continue  # Si no se encuentra la subsección, pasar a la siguiente
                         
                         start_sub = idx_sub[0]
@@ -205,22 +221,29 @@ class TablaPersonalizada:
                             df_filas['Sección'] = seccion
                             df_filas['Subsección'] = subseccion
                             resultados.append(df_filas)
+                            print(f"Encontradas {len(df_filas)} filas para {seccion}/{subseccion}")
             
             except Exception as e:
                 messagebox.showerror("Error", f"Error procesando {tabla}:\n{e}")
+                import traceback
+                traceback.print_exc()  # Esto imprimirá el traceback completo en la consola
                 return
         
         if resultados:
-            # Combinar todos los resultados
-            df_final = pd.concat(resultados, ignore_index=True)
-            
-            # Eliminar columnas duplicadas si las hay
-            df_final = df_final.loc[:, ~df_final.columns.duplicated()]
-            
-            # Guardar el resultado
-            archivo_salida = "resultados/tabla_personalizada.xlsx"
-            df_final.to_excel(archivo_salida, index=False)
-            messagebox.showinfo("Éxito", f"Archivo generado:\n{archivo_salida}")
+            try:
+                # Combinar todos los resultados
+                df_final = pd.concat(resultados, ignore_index=True)
+                
+                # Eliminar columnas duplicadas si las hay
+                df_final = df_final.loc[:, ~df_final.columns.duplicated()]
+                
+                # Guardar el resultado
+                archivo_salida = "resultados/tabla_personalizada.xlsx"
+                df_final.to_excel(archivo_salida, index=False)
+                messagebox.showinfo("Éxito", f"Archivo generado:\n{os.path.abspath(archivo_salida)}")
+                print(f"Archivo guardado en: {os.path.abspath(archivo_salida)}")
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo guardar el archivo:\n{e}")
         else:
             messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
     

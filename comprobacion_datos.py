@@ -30,7 +30,7 @@ def comprobar_datos(root):
 
     # [!!!] Sustituir......
     # [!!!] Y comprobar que no explote por caracteres especiales....................
-    archivos_requeridos = ['regimen_general.xls', 'todas_las_ensenanzas.xls', 'ensenanza_de_adultos.xls']
+    archivos_requeridos = ['regimen_general.xls', 'infantil.xls', 'primaria.xls']
     archivos_presentes = os.listdir(datos_dir)
 
     resultado = []
