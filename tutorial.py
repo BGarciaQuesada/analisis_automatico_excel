@@ -11,7 +11,7 @@ class TutorialApp:
         
         # Crear ventana de tutorial
         self.ventana = tk.Toplevel(root)
-        self.ventana.title("Tutorial - Gestor de Tablas MEFYP")
+        self.ventana.title("Tutorial - Gestor de Tablas MEFPYD")
         self.ventana.minsize(600, 400)
         self.ventana.geometry("1000x700")
         
@@ -19,14 +19,14 @@ class TutorialApp:
         self.pasos = [
             # La primera imagen (bienvenida) no lleva a nada, es para comprobar el placeholder, sustituir luego
             {
-                "titulo": "Bienvenido al Gestor de Tablas MEFYP",
+                "titulo": "Bienvenido al Gestor de Tablas MEFPYD",
                 "imagen": "imagenes/bienvenida.png",
                 "texto": "La función de este programa es agilizar el proceso de creación de tablas para el informe elaborado por el Consejo Escolar Andalucía en relación a las cifras de educación."
             },
             {
                 "titulo": "Descarga de los archivos",
                 "imagen": "imagenes/paso1.png",
-                "texto": "Acceda al portal de datos abiertos del MEFYP (localizado abajo) y seleccione la estadística pertinente",
+                "texto": "Acceda al portal de datos abiertos del MEFPYD (localizado abajo) y seleccione la estadística pertinente",
                 "enlace": "https://www.educacionfpydeportes.gob.es/servicios-al-ciudadano/estadisticas.html"
             },
             {

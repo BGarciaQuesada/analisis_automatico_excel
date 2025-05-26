@@ -4,8 +4,6 @@ import os
 import tkinter as tk
 from tkinter import messagebox
 
-# [!!!] Esta clase explotó durante pulls/push/reset. Ahora DEBERÍA funcionar. Rerererevisar luego.
-
 class ModeloPlantilla:
     def __init__(self, archivos_entrada, archivo_salida, secciones, subsecciones, filas_objetivo):
         self.archivos_entrada = archivos_entrada

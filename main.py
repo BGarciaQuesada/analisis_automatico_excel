@@ -4,16 +4,40 @@ import comprobacion_datos
 import tabla_predeterminada
 import tabla_personalizada
 import tutorial
+from PIL import Image, ImageTk  # Necesitarás instalar Pillow: pip install Pillow
 
 def main():
     # Creación de root (ventana) con nuevo estilo
     root = tk.Tk()
-    root.title("Gestor de Tablas MFYP")
+    root.title("Gestor de Tablas MEFPYD")
     root.minsize(800, 600)  # Tamaño mínimo más grande
     
     # Frame principal
     main_frame = ttk.Frame(root)
     main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+    
+    # Cabecera (Imagen + Título)
+    header_frame = ttk.Frame(main_frame)
+    header_frame.pack(pady=(0, 20))
+    
+    # Cargar imagen
+    try:
+        img = Image.open("imagenes/logo.png")
+        img = img.resize((64, 64), Image.Resampling.LANCZOS)  # Redimensionar a 64x64
+        logo_img = ImageTk.PhotoImage(img)
+        
+        logo_label = ttk.Label(header_frame, image=logo_img)
+        logo_label.image = logo_img  # Mantener referencia
+        logo_label.pack()
+    except FileNotFoundError:
+        # No tiene que salir por ningún lado, hago print y ya
+        print("Advertencia: No se encontró el archivo de logo.png")
+    
+    # Título
+    title_label = ttk.Label(header_frame, 
+                          text="Gestor de Tablas MEFPYD", 
+                          font=('Arial', 20, 'bold'))
+    title_label.pack(pady=(10, 20))
     
     # Métodos a ser utilizados por los botones
     def on_comprobacion_datos():
@@ -32,8 +56,7 @@ def main():
         root.withdraw()
         tutorial.mostrar_tutorial(root)
 
-    # --- INTERFAZ GRÁFICA ---
-    
+    # Botones
     btn_style = ttk.Style()
     btn_style.configure('TButton', font=('Arial', 12), padding=10)
     

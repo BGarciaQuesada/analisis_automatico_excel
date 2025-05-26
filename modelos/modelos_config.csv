@@ -1,4 +1,4 @@
 nombre_modelo,archivos_entrada,secciones,subsecciones,filas_objetivo
 Modelo 2.06,['datos/regimen_general.xls'],"['TODOS LOS CENTROS', 'CENTROS PÚBLICOS']","['AMBOS SEXOS', 'Hombres', 'Mujeres']",['01 ANDALUCÍA']
-Modelo 2.10,['datos/educacion_primaria.xlsx'],"['CENTROS PÚBLICOS', 'CENTROS PRIVADOS']","['TOTAL', 'Hombres', 'Mujeres']","['01 ANDALUCÍA', '04 CASTILLA Y LEÓN']"
+Modelo 2.10,['datos/primaria.xls'],"['CENTROS PÚBLICOS', 'CENTROS PRIVADOS']","['TOTAL', 'Hombres', 'Mujeres']","['01 ANDALUCÍA', '04 CASTILLA Y LEÓN']"
 Modelo 2.15,"['datos/universidades.xls', 'datos/matriculas.xls']",['UNIVERSIDADES PÚBLICAS'],['ALUMNOS MATRICULADOS'],"['ANDALUCÍA', 'MADRID']"
