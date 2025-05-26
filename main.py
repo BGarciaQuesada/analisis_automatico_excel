@@ -23,7 +23,7 @@ def main():
     # Cargar imagen
     try:
         img = Image.open("imagenes/logo.png")
-        img = img.resize((64, 64), Image.Resampling.LANCZOS)  # Redimensionar a 64x64
+        img = img.resize((128, 128), Image.Resampling.LANCZOS)  # Redimensionar a 64x64
         logo_img = ImageTk.PhotoImage(img)
         
         logo_label = ttk.Label(header_frame, image=logo_img)
