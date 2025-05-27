@@ -4,7 +4,7 @@ import comprobacion_datos
 import tabla_predeterminada
 import tabla_personalizada
 import tutorial
-from PIL import Image, ImageTk  # Necesitarás instalar Pillow: pip install Pillow
+from PIL import Image, ImageTk  # Para imagen del logo
 
 def main():
     # Creación de root (ventana) con nuevo estilo

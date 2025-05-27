@@ -25,11 +25,8 @@ def comprobar_datos(root):
             "Directorio creado",
             "Directorio 'datos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de datos a esta."
         )
-        # [!!!] Siento que este return es un crimen, comprobar más tarde
         return # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
 
-    # [!!!] Sustituir......
-    # [!!!] Y comprobar que no explote por caracteres especiales....................
     archivos_requeridos = ['regimen_general.xls', 'infantil.xls', 'primaria.xls']
     archivos_presentes = os.listdir(datos_dir)
 

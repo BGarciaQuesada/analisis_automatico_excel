@@ -168,8 +168,6 @@ class TablaPersonalizada:
                 df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
                 df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
                 
-                # > Con tanto borrado y cambio se me quedaron variables muertas. Ya no es el caso.
-                
                 # Debug: Mostrar información de las tablas cargadas
                 print(f"\nProcesando tabla: {tabla}")
                 print("Columnas:", df.columns.tolist())
