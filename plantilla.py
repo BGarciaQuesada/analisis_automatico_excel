@@ -15,9 +15,9 @@ class ModeloPlantilla:
     def limpiar_texto(self, texto):
         if not isinstance(texto, str):
             return texto
-        texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
-        texto = re.sub(r"\s*\*.*$", "", texto)
-        return texto.strip()
+        texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto) # Elimina texto entre paréntesis/corchetes
+        texto = re.sub(r"\s*\*.*$", "", texto) # Elimina texto después de asteriscos
+        return texto.strip() # Elimina espacios en blanco al inicio/final
 
     def ejecutar_modelo(self, root):
         try:
@@ -36,19 +36,27 @@ class ModeloPlantilla:
                 df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
                 df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
 
+                # > Me he dado cuenta de que antes solo marcaba 1 fila después
+                # > de la sección en lugar de cogerla entera. Arreglado.
+
                 # Procesar cada sección
-                for seccion in self.secciones:
+                for i, seccion in enumerate(self.secciones):
                     # Encontrar la sección
                     idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
                     if not idx_seccion:
                         continue
 
                     start = idx_seccion[0]
-                    end = start + 1
 
-                    # Encontrar el final de la sección
-                    while end < len(df) and df.iloc[end, 0] not in self.secciones:
-                        end += 1
+                    # Determinar el fin de la sección
+                    if i < len(self.secciones) - 1:
+                        # Buscar siguiente sección en la lista
+                        next_seccion = self.secciones[i + 1]
+                        idx_next = df.index[df.iloc[:, 0] == next_seccion].tolist()
+                        end = idx_next[0] if idx_next else len(df)
+                    else:
+                        # Última sección va hasta el final
+                        end = len(df)
 
                     # Filtrar subsecciones
                     df_seccion = df.iloc[start:end].copy()

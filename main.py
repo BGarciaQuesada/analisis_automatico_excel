@@ -23,14 +23,14 @@ def main():
     # Cargar imagen
     try:
         img = Image.open("imagenes/logo.png")
-        img = img.resize((128, 128), Image.Resampling.LANCZOS)  # Redimensionar a 64x64
+        img = img.resize((128, 128), Image.Resampling.LANCZOS)  # Redimensionar
         logo_img = ImageTk.PhotoImage(img)
         
         logo_label = ttk.Label(header_frame, image=logo_img)
         logo_label.image = logo_img  # Mantener referencia
         logo_label.pack()
     except FileNotFoundError:
-        # No tiene que salir por ningún lado, hago print y ya
+        # No tiene que salir por ningún lado, no es vital, hago print y ya
         print("Advertencia: No se encontró el archivo de logo.png")
     
     # Título

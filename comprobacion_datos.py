@@ -10,7 +10,7 @@ def comprobar_datos(root):
 
     ventana_resultados = tk.Toplevel(root)
     ventana_resultados.title("Resultados de Comprobación")
-    ventana_resultados.minsize(800, 400)
+    ventana_resultados.minsize(800, 600)
     
     # Frame principal
     main_frame = ttk.Frame(ventana_resultados)
@@ -23,7 +23,7 @@ def comprobar_datos(root):
         os.makedirs(datos_dir)
         tk.messagebox.showinfo(
             "Directorio creado",
-            "Directorio 'datos' no encontrado, se ha creado de nuevo. Asegúrate de añadir los archivos de datos a esta."
+            "Directorio 'datos' no encontrado, se ha creado de nuevo. Asegúrese de añadir los archivos de datos a esta."
         )
         return # Si se acaba de crear, no puede haber archivos, por lo que no se molesta en comprobar
 

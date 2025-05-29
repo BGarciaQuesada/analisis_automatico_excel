@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import pandas as pd
 import os
 import re
+from plantilla import ModeloPlantilla
 
 class TablaPersonalizada:
     def __init__(self, root):
@@ -25,10 +26,13 @@ class TablaPersonalizada:
         main_frame = ttk.Frame(self.ventana)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
+        # > Se ha creado una columna nueva para indicar el nombre de la tabla de la que se cogen los datos (claridez)
         # Lista de tablas seleccionadas
-        self.lista_tablas = ttk.Treeview(main_frame, columns=('config',), show='headings', selectmode='browse')
-        self.lista_tablas.heading('#0', text='Tabla')
+        self.lista_tablas = ttk.Treeview(main_frame, columns=('tabla', 'config'), show='headings', selectmode='browse')
+        self.lista_tablas.heading('tabla', text='Tabla')
         self.lista_tablas.heading('config', text='Configuración')
+        self.lista_tablas.column('tabla', width=150)
+        self.lista_tablas.column('config', width=400)
         self.lista_tablas.pack(fill=tk.BOTH, expand=True, pady=5)
         
         # Scrollbar para la lista
@@ -53,7 +57,7 @@ class TablaPersonalizada:
         
         # Eliminar de la lista visual
         item = self.lista_tablas.item(seleccion[0])
-        tabla = item['text']
+        tabla = item['values'][0]  # Ahora el nombre está en values[0]
         
         # Eliminar de la lista interna
         self.tablas_seleccionadas = [t for t in self.tablas_seleccionadas if t[0] != tabla]
@@ -76,13 +80,12 @@ class TablaPersonalizada:
                            for tabla in self.tablas_disponibles}
         
         var_filas = {tabla: {fila: tk.BooleanVar() 
-                    for fila in ["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]} 
+                    for fila in ["01 ANDALUCÍA", "Granada", "02 ARAGÓN"]} 
                     for tabla in self.tablas_disponibles}
         
         # Deshabilitar checkboxes de tablas ya seleccionadas
         tablas_ya_seleccionadas = [t[0] for t in self.tablas_seleccionadas]
-        
-        # > Antes esto era una lista de botones gigante y lo considero cutre. Me gusta más la idea de varias pestañas        
+                
         # Notebook para organizar las pestañas
         notebook = ttk.Notebook(ventana_seleccion)
         notebook.pack(fill=tk.BOTH, expand=True)
@@ -113,7 +116,7 @@ class TablaPersonalizada:
             
             # Filas objetivo
             ttk.Label(tab_frame, text="Filas objetivo:").grid(row=0, column=2, sticky=tk.W, padx=5, pady=5)
-            for i, fila in enumerate(["01 ANDALUCÍA", "02 ARAGÓN", "03 ASTURIAS"]):
+            for i, fila in enumerate(["01 ANDALUCÍA", "Granada", "02 ARAGÓN"]):
                 cb = ttk.Checkbutton(tab_frame, text=fila, variable=var_filas[tabla][fila])
                 cb.grid(row=i+1, column=2, sticky=tk.W, padx=20, pady=2)
         
@@ -134,7 +137,7 @@ class TablaPersonalizada:
                         'filas': filas
                     }
                     self.tablas_seleccionadas.append((tabla, config))
-                    self.lista_tablas.insert('', tk.END, text=tabla, values=(str(config)))
+                    self.lista_tablas.insert('', tk.END, values=(tabla, str(config)))
             
             ventana_seleccion.destroy()
         
@@ -153,104 +156,40 @@ class TablaPersonalizada:
             messagebox.showerror("Error", f"No se pudo crear el directorio 'resultados':\n{e}")
             return
         
-        # Procesar cada tabla seleccionada
-        resultados = []
-        for tabla, config in self.tablas_seleccionadas:
-            try:
-                archivo = f"datos/{tabla}.xls"
-                if not os.path.exists(archivo):
-                    messagebox.showwarning("Advertencia", f"Archivo no encontrado: {archivo}")
-                    continue
-                
-                df = pd.read_excel(archivo, header=6)
-                
-                # Limpiar nombres de columnas
-                df.columns = [self.limpiar_texto(col) if isinstance(col, str) else col for col in df.columns]
-                df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: self.limpiar_texto(x) if isinstance(x, str) else x)
-                
-                # Debug: Mostrar información de las tablas cargadas
-                print(f"\nProcesando tabla: {tabla}")
-                print("Columnas:", df.columns.tolist())
-                print("Primeras filas de la primera columna:")
-                print(df.iloc[:, 0].head(20))
-                
-                # Procesar cada sección seleccionada
-                for seccion in config['secciones']:
-                    # Encontrar el índice de la sección
-                    idx_seccion = df.index[df.iloc[:, 0] == seccion].tolist()
-                    if not idx_seccion:
-                        print(f"Sección no encontrada: {seccion}")
-                        continue  # Si no se encuentra la sección, pasar a la siguiente
-                    
-                    start_idx = idx_seccion[0]
-                    end_idx = start_idx + 1
-                    
-                    # Buscar el final de la sección (hasta la siguiente sección o fin de dataframe)
-                    while end_idx < len(df) and df.iloc[end_idx, 0] not in config['secciones']:
-                        end_idx += 1
-                    
-                    # Extraer solo esta sección
-                    df_seccion = df.iloc[start_idx:end_idx].copy()
-                    
-                    # Procesar cada subsección seleccionada dentro de esta sección
-                    for subseccion in config['subsecciones']:
-                        # Encontrar el índice de la subsección
-                        idx_sub = df_seccion.index[df_seccion.iloc[:, 0] == subseccion].tolist()
-                        if not idx_sub:
-                            print(f"Subsección no encontrada: {subseccion}")
-                            continue  # Si no se encuentra la subsección, pasar a la siguiente
-                        
-                        start_sub = idx_sub[0]
-                        end_sub = start_sub + 1
-                        
-                        # Buscar el final de la subsección (hasta la siguiente subsección o fin de sección)
-                        while (end_sub < len(df_seccion)) and (df_seccion.iloc[end_sub, 0] not in config['subsecciones']):
-                            end_sub += 1
-                        
-                        # Extraer solo esta subsección
-                        df_subseccion = df_seccion.iloc[start_sub:end_sub].copy()
-                        
-                        # Filtrar solo las filas objetivo dentro de esta subsección
-                        df_filas = df_subseccion[df_subseccion.iloc[:, 0].isin(config['filas'])].copy()
-                        
-                        # Si encontramos filas que coinciden, añadirlas a los resultados
-                        if not df_filas.empty:
-                            df_filas['Tabla'] = tabla
-                            df_filas['Sección'] = seccion
-                            df_filas['Subsección'] = subseccion
-                            resultados.append(df_filas)
-                            print(f"Encontradas {len(df_filas)} filas para {seccion}/{subseccion}")
-            
-            except Exception as e:
-                messagebox.showerror("Error", f"Error procesando {tabla}:\n{e}")
-                import traceback
-                traceback.print_exc()  # Esto imprimirá el traceback completo en la consola
-                return
+        # > Me he dado cuenta que no llegué a hacer el cambio de usar ModeloPlantilla aquí. Arreglado.
+        # Preparar datos para ModeloPlantilla
+        archivos_entrada = []
+        secciones = []
+        subsecciones = []
+        filas_objetivo = []
         
-        if resultados:
-            try:
-                # Combinar todos los resultados
-                df_final = pd.concat(resultados, ignore_index=True)
-                
-                # Eliminar columnas duplicadas si las hay
-                df_final = df_final.loc[:, ~df_final.columns.duplicated()]
-                
-                # Guardar el resultado
-                archivo_salida = "resultados/tabla_personalizada.xlsx"
-                df_final.to_excel(archivo_salida, index=False)
-                messagebox.showinfo("Éxito", f"Archivo generado:\n{os.path.abspath(archivo_salida)}")
-                print(f"Archivo guardado en: {os.path.abspath(archivo_salida)}")
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudo guardar el archivo:\n{e}")
-        else:
-            messagebox.showwarning("Advertencia", "No se encontraron datos con los criterios seleccionados")
-    
-    def limpiar_texto(self, texto):
-        if not isinstance(texto, str):
-            return texto
-        texto = re.sub(r"\s*[\(\[].*?[\)\]]", "", texto)
-        texto = re.sub(r"\s*\*.*$", "", texto)
-        return texto.strip()
+        for tabla, config in self.tablas_seleccionadas:
+            archivo = f"datos/{tabla}.xls"
+            if not os.path.exists(archivo):
+                messagebox.showwarning("Advertencia", f"Archivo no encontrado: {archivo}")
+                continue
+            
+            archivos_entrada.append(archivo)
+            secciones.extend(config['secciones'])
+            subsecciones.extend(config['subsecciones'])
+            filas_objetivo.extend(config['filas'])
+        
+        if not archivos_entrada:
+            messagebox.showwarning("Advertencia", "No hay archivos válidos para procesar")
+            return
+        
+        archivo_salida = "resultados/tabla_personalizada.xlsx"
+        
+        # Usar ModeloPlantilla para procesar los datos
+        modelo = ModeloPlantilla(
+            archivos_entrada=archivos_entrada,
+            archivo_salida=archivo_salida,
+            secciones=secciones,
+            subsecciones=subsecciones,
+            filas_objetivo=filas_objetivo
+        )
+        
+        modelo.ejecutar_modelo(self.root)
     
     def cerrar(self):
         self.ventana.destroy()

@@ -3,6 +3,7 @@ from tkinter import ttk
 from PIL import Image, ImageTk, ImageDraw, ImageFont  # Para las imagenes
 import os
 import webbrowser  # Funcionalidad del enlace
+from functools import partial  # Para el debounce del redimensionamiento
 
 class TutorialApp:
     def __init__(self, root):
@@ -12,12 +13,13 @@ class TutorialApp:
         # Crear ventana de tutorial
         self.ventana = tk.Toplevel(root)
         self.ventana.title("Tutorial - Gestor de Tablas MEFPYD")
-        self.ventana.minsize(600, 400)
-        self.ventana.geometry("1000x700")
+        
+        # Configuración de tamaño (Orden cambiado, ahora funciona)
+        self.ventana.geometry("1000x700") # Tamaño inicial
+        self.ventana.minsize(800, 600) # Tamaño mínimo
         
         # Configuración de pasos del tutorial
         self.pasos = [
-            # La primera imagen (bienvenida) no lleva a nada, es para comprobar el placeholder, sustituir luego
             {
                 "titulo": "Bienvenido al Gestor de Tablas MEFPYD",
                 "imagen": "imagenes/bienvenida.png",
@@ -81,6 +83,9 @@ class TutorialApp:
         self.canvas = tk.Canvas(img_frame, bg='#f0f0f0', highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
         
+        # Vincular redimensionamiento del canvas (debounce para mejor rendimiento)
+        self.canvas.bind("<Configure>", lambda e: self.ventana.after(100, partial(self.redibujar_imagen_actual)))
+        
         # Frame para el texto descriptivo
         texto_frame = ttk.Frame(main_frame)
         texto_frame.pack(fill=tk.BOTH, expand=True, pady=10)
@@ -131,6 +136,12 @@ class TutorialApp:
         )
         self.contador.pack(side=tk.BOTTOM, pady=5)
     
+    # Manejar el redibujado durante redimensionamiento
+    def redibujar_imagen_actual(self, event=None):
+        if hasattr(self, 'paso_actual') and 0 <= self.paso_actual < len(self.pasos):
+            paso = self.pasos[self.paso_actual]
+            self.mostrar_imagen(paso["imagen"], event)
+
     # Método para mostrar el paso actual
     def mostrar_paso(self):
         self.ventana.update_idletasks()  # Actualiza geometría
@@ -148,13 +159,13 @@ class TutorialApp:
         # Añadir enlace si existe
         if "enlace" in paso:
             self.texto.insert(tk.END, "\n\n[Enlace oficial]", "enlace")
-            self.texto.tag_config("enlace", foreground="blue", underline=1)
+            self.texto.tag_config("enlace", foreground="blue", underline=1) # Formato azul y subrayado
             self.texto.tag_bind("enlace", "<Button-1>", 
-                              lambda e: webbrowser.open(paso["enlace"]))
+                              lambda e: webbrowser.open(paso["enlace"])) # Hacer clic abre enlace
             self.texto.tag_bind("enlace", "<Enter>", 
-                              lambda e: self.texto.config(cursor="hand2"))
+                              lambda e: self.texto.config(cursor="hand2")) # Pasar el culsor cambia a dedo apuntando
             self.texto.tag_bind("enlace", "<Leave>", 
-                              lambda e: self.texto.config(cursor=""))
+                              lambda e: self.texto.config(cursor="")) # Apartar el cursor lo resetea a como estaba
         
         self.texto.config(state=tk.DISABLED)
         
@@ -171,14 +182,18 @@ class TutorialApp:
         )
     
     # Renderizar imagen del paso actual REDIMENSIONADA
-    def mostrar_imagen(self, ruta_imagen):
+    def mostrar_imagen(self, ruta_imagen, event=None):
         try:
             # Limpiar canvas
             self.canvas.delete("all")
             
-            # Obtener dimensiones del canvas
-            canvas_width = self.canvas.winfo_width()
-            canvas_height = self.canvas.winfo_height()
+            # Obtener dimensiones del canvas (del evento o del widget)
+            if event:
+                canvas_width = event.width
+                canvas_height = event.height
+            else:
+                canvas_width = self.canvas.winfo_width()
+                canvas_height = self.canvas.winfo_height()
             
             # Valores por defecto si el canvas es muy pequeño
             if canvas_width < 100 or canvas_height < 100:
@@ -241,7 +256,7 @@ class TutorialApp:
                 anchor=tk.CENTER
             )
     
-    # Método para avanzar (se bloquea si está en el primero paso)
+    # Método para avanzar (se bloquea si está en el último paso)
     def siguiente_paso(self):
         if self.paso_actual < len(self.pasos) - 1:
             self.paso_actual += 1
@@ -249,7 +264,7 @@ class TutorialApp:
         else:
             self.cerrar_tutorial()
 
-    # Método para avanzar (LUEGO SE TIENE QUE CAMBIAR A FINALIZAR)
+    # Método para retroceder (se bloquea si está en el primero paso)
     def anterior_paso(self):
         if self.paso_actual > 0:
             self.paso_actual -= 1

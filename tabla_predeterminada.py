@@ -16,7 +16,7 @@ def mostrar_menu_predeterminadas(root):
     # Creación de ventana con nuevo estilo
     ventana_predeterminadas = tk.Toplevel(root)
     ventana_predeterminadas.title("Tablas Predeterminadas")
-    ventana_predeterminadas.minsize(600, 400)
+    ventana_predeterminadas.minsize(800, 600)
     
     # Frame principal
     main_frame = ttk.Frame(ventana_predeterminadas)
@@ -46,7 +46,15 @@ def mostrar_menu_predeterminadas(root):
     modelos_frame = ttk.Frame(main_frame)
     modelos_frame.pack(fill=tk.BOTH, expand=True, pady=10)
     
-    # --- INTERFAZ GRÁFICA ---
+    # Crear botones para cada modelo disponible
+    for modelo in modelos_disponibles:
+        btn_modelo = ttk.Button(
+            modelos_frame, 
+            text=modelo, 
+            command=lambda m=modelo: mostrar_detalle_modelo(m),
+            width=30
+        )
+        btn_modelo.pack(pady=5, fill=tk.X)
     
     def mostrar_detalle_modelo(modelo):
         # Ventana de detalle
@@ -78,10 +86,6 @@ def mostrar_menu_predeterminadas(root):
         
         ttk.Label(detalle_frame, text=descripcion, wraplength=400, justify="left").pack(pady=20)
         
-        # Frame para botones
-        btn_frame = ttk.Frame(detalle_frame)
-        btn_frame.pack(pady=20)
-        
         def generar_xls():
             try:
                 # Usar parámetros del CSV
@@ -97,18 +101,12 @@ def mostrar_menu_predeterminadas(root):
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo generar la tabla:\n{e}")
 
+        # Frame para botones
+        btn_frame = ttk.Frame(detalle_frame)
+        btn_frame.pack(pady=20)
+
         ttk.Button(btn_frame, text="Generar XLS", command=generar_xls, width=15).pack(side=tk.LEFT, padx=10)
         ttk.Button(btn_frame, text="Regresar", command=ventana_detalle.destroy, width=15).pack(side=tk.RIGHT, padx=10)
-
-    # Crear botones para cada modelo disponible
-    for modelo in modelos_disponibles:
-        btn_modelo = ttk.Button(
-            modelos_frame, 
-            text=modelo, 
-            command=lambda m=modelo: mostrar_detalle_modelo(m),
-            width=30
-        )
-        btn_modelo.pack(pady=5, fill=tk.X)
 
     # Botón de Regresar
     ttk.Button(
